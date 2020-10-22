@@ -19,10 +19,10 @@ DeviceLib installeren:
 2. Type het commando 'sudo pcmanfm'. De verkenner opent met superuser-rechten.
 3. Kopieer de inhoud van de uitgepakte map "usr" naar de map '/usr/' van de raspberry.
 4. Kopieer de inhoud van de uitgepakte map "home-pi" naar de map '/home/pi/' van de raspberry.
-5. type het commando 'sudo chmod 777 ~/Projecten'.
-6. type het commando 'sudo chmod 777 ~/Projecten/OnzeApp'.
-7. Type het commando 'sudo ldconfig'.
-8. Sluit de verkenner.
+5. Sluit de verkenner.
+6. type het commando 'sudo chmod 777 ~/Projecten'.
+7. type het commando 'sudo chmod 777 ~/Projecten/OnzeApp'.
+8. Type het commando 'sudo ldconfig'.
 9. Sluit de commando-shell.
 
 Klaar om te programmeren:
