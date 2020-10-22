@@ -1,6 +1,6 @@
 # DeviceLib voor Arduino
 
-Kopieer alle bestande uit deze folder en de Arduion-folder naar
+Kopieer alle bestanden uit deze folder en de Arduino-folder naar
 de map Documente\Arduino\libraries\DeviceLib op een lokale computer.
 De Arduino-IDE zal de classes van DeviceLib automatisch herkennen.
 
