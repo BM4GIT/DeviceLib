@@ -1,10 +1,10 @@
-#DeviceLib voor Arduino
+# DeviceLib voor Arduino
 
-Kopieer alle bestande uit deze folder en de Arduion-folder naar
+Kopieer alle bestanden uit deze folder en de Arduino-folder naar
 de map Documente\Arduino\libraries\DeviceLib op een lokale computer.
 De Arduino-IDE zal de classes van DeviceLib automatisch herkennen.
 
-#DeviceLib voor de Raspberry
+# DeviceLib voor de Raspberry
 
 Voor de Raspberry bestaan er twee versies van DeviceLib.
 De ene werkt op de standaard linux-manier via het bestandsysteem.
