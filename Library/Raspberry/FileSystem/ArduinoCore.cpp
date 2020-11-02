@@ -1,10 +1,31 @@
 // file:    ArduinoCore.cpp
 // Copyright 2020 D.E.Repolev
 //
-// This file is part of BmLib. BmLib is free software and you may distribute it under
+// This file is part of DeviceLib. DeviceLib is free software and you may distribute it under
 // the terms of the GNU General Public License (version 3 or later) as published by the
 // Free Software Foundation. The full license text you find at 'https://www.gnu.org/licenses'.
-// Disclaimer: BmLib is distributed without any warranty.
+// Disclaimer: DeviceLib is distributed without any warranty.
+
+/*
+*  The following copyright notes only concern:
+*  > Serial interface
+*  > attachInterrupt / detachInterrupt
+*  > analogRead / analogWrite
+*  > the pwm and threading helper-routines
+* 
+*  Copyright (C) 2012 Libelium Comunicaciones Distribuidas S.L.
+*  http://www.libelium.com
+*
+*  This program is free software: you can redistribute it and/or modify
+*  it under the terms of the GNU General Public License as published by
+*  the Free Software Foundation, either version 3 of the License, or
+*  (at your option) any later version.
+*
+*  Version 2.4 (For Raspberry Pi 2)
+*  Author: Sergio Martinez, Ruben Martin
+*
+*  2020: Some minor changes have been made to meet the structure of the DeviceLib library.
+*/
 
 
 #include <thread>
@@ -19,12 +40,12 @@ namespace unistd {
     #include <unistd.h>
 };
 
+gpio g_gpio;
+hirestime g_start;
+
 //////////////////////
 // HELPER FUNCTIONS //
 //////////////////////
-
-gpio g_gpio;
-hirestime g_start;
 
 hirestime currentTime()
 {
@@ -50,6 +71,7 @@ ulong diffMicros( hirestime stop, hirestime start)
     return chrono::duration_cast<chrono::microseconds>( stop - start).count();
 }
 
+#ifndef GTK
 struct pwmgoStruct {
 	void (*pwmworker)();
 	thread pwmthread;
@@ -121,10 +143,157 @@ void pwm4loop()
     }
     printf( "Stopped 'pwm4loop'.\n");
 }
+#endif
 
-////////////////////////////
-// ARDUINO CORE FUNCTIONS //
-////////////////////////////
+struct bcm2835_peripheral{
+    unsigned long addr_p;
+    int mem_fd;
+    void *map;
+    volatile unsigned int *addr;
+};
+
+struct ThreadArg{
+    void (*func)();
+    int pin;
+};
+
+pthread_t idThread2;
+pthread_t idThread3;
+pthread_t idThread4;
+pthread_t idThread5;
+pthread_t idThread6;
+pthread_t idThread7;
+pthread_t idThread8;
+pthread_t idThread9;
+pthread_t idThread10;
+pthread_t idThread11;
+pthread_t idThread12;
+pthread_t idThread13;
+
+#define IOBASE   0x3f000000
+struct bcm2835_peripheral bsc_rev1 = {IOBASE + 0X205000};
+struct bcm2835_peripheral bsc_rev2 = {IOBASE + 0X804000};
+struct bcm2835_peripheral bsc0;
+
+int getBoardRev()
+{
+	FILE *cpu_info;
+	char line [120];
+	char *c,finalChar;
+	
+	if ((cpu_info = fopen("/proc/cpuinfo","r"))==NULL){
+		fprintf(stderr,"Unable to open /proc/cpuinfo. Cannot determine board reivision.\n");
+		exit(1);
+	}
+	
+	while (fgets (line,120,cpu_info) != NULL){
+		if(strncmp(line,"Revision",8) == 0) break;
+	}
+	
+	fclose(cpu_info);
+	
+	if (line == NULL){
+		fprintf (stderr, "Unable to determine board revision from /proc/cpuinfo.\n") ;
+		exit(1);
+	}
+	
+	for (c = line ; *c ; ++c)
+    if (isdigit (*c))
+      break ;
+
+	if (!isdigit (*c)){
+		fprintf (stderr, "Unable to determine board revision from /proc/cpuinfo\n") ;
+		fprintf (stderr, "  (Info not found in: %s\n", line) ;
+		exit(1);
+	}
+	
+	finalChar = c [strlen (c) - 2] ;
+	
+	if ((finalChar == '2') || (finalChar == '3')){
+		bsc0 = bsc_rev1;
+		return 1;
+	}else{
+		bsc0 = bsc_rev2;
+		return 2;
+	}
+}
+
+pthread_t *getThreadIdFromPin(int pin){
+	switch(pin){
+		case 2: return &idThread2; break;
+		case 3: return &idThread3; break;
+		case 4: return &idThread4; break;
+		case 5: return &idThread5; break;
+		case 6: return &idThread6; break;
+		case 7: return &idThread7; break;
+		case 8: return &idThread8; break;
+		case 9: return &idThread9; break;
+		case 10: return &idThread10; break;
+		case 11: return &idThread11; break;
+		case 12: return &idThread12; break;
+		case 13: return &idThread13; break;
+	}
+    return 0; // should never come here
+}
+
+/* This is the function that will be running in a thread if
+ * attachInterrupt() is called */
+void * threadFunction(void *args){
+	ThreadArg *arguments = (ThreadArg *)args;
+	int pin = arguments->pin;
+	
+	int GPIO_FN_MAXLEN = 32;
+	int RDBUF_LEN = 5;
+	
+	char fn[GPIO_FN_MAXLEN];
+	int fd,ret;
+	struct pollfd pfd;
+	char rdbuf [RDBUF_LEN];
+	
+	memset(rdbuf, 0x00, RDBUF_LEN);
+	memset(fn,0x00,GPIO_FN_MAXLEN);
+	
+	snprintf(fn, GPIO_FN_MAXLEN-1, "/sys/class/gpio/gpio%d/value",pin);
+	fd=open(fn, O_RDONLY);
+	if(fd<0){
+		perror(fn);
+		exit(1);
+	}
+	pfd.fd=fd;
+	pfd.events=POLLPRI;
+	
+	ret=unistd::read(fd,rdbuf,RDBUF_LEN-1);
+	if(ret<0){
+		perror("Error reading interrupt file\n");
+		exit(1);
+	}
+	
+	while(1){
+		memset(rdbuf, 0x00, RDBUF_LEN);
+		unistd::lseek(fd, 0, SEEK_SET);
+		ret=poll(&pfd, 1, -1);
+		if(ret<0){
+			perror("Error waiting for interrupt\n");
+			unistd::close(fd);
+			exit(1);
+		}
+		if(ret==0){
+			printf("Timeout\n");
+			continue;
+		}
+		ret=unistd::read(fd,rdbuf,RDBUF_LEN-1);
+		if(ret<0){
+			perror("Error reading interrupt file\n");
+			exit(1);
+		}
+		//Interrupt. We call user function.
+		arguments->func();
+	}
+}
+
+//////////////////
+// ARDUINO CORE //
+//////////////////
 
 void delay( uint32_t msec)
 {
@@ -158,17 +327,18 @@ void pinMode( uint8_t pin, uint8_t mode)
     g_gpio.digitalWrite( pin, 0);
 }
 
+void digitalWrite( uint8_t pin, uint8_t data)
+{
+  g_gpio.digitalWrite( pin, data);
+}
+
 uint8_t digitalRead( uint8_t pin)
 {
   uint8_t val = g_gpio.digitalRead( pin);
   return val;
 }
 
-void digitalWrite( uint8_t pin, uint8_t data)
-{
-  g_gpio.digitalWrite( pin, data);
-}
-
+#ifndef GTK
 void analogWrite( uint8_t pin, uint16_t level)
 {
     if ( level < 0 ) level = 0;
@@ -207,35 +377,120 @@ void analogWrite( uint8_t pin, uint16_t level)
 	    break;
 	}
 }
+#endif
 
-//////////////////
-// ARDUINO MAIN //
-//////////////////
+void attachInterrupt( uint8_t p,void (*f)(), uint m){
+	int GPIOPin = p;
+	pthread_t *threadId = getThreadIdFromPin(p);
+	struct ThreadArg *threadArgs = (ThreadArg *)malloc(sizeof(ThreadArg));
+	threadArgs->func = f;
+	threadArgs->pin = GPIOPin;
+	
+	//Export pin for interrupt
+	FILE *fp = fopen("/sys/class/gpio/export","w");
+	if (fp == NULL){
+		fprintf(stderr,"Unable to export pin %d for interrupt\n",p);
+		exit(1);
+	}else{
+		fprintf(fp,"%d",GPIOPin); 
+	}
+	fclose(fp);
+	
+	//The system to create the file /sys/class/gpio/gpio<GPIO number>
+	//So we wait a bit
+	delay(1L);
+	
+	char * interruptFile = NULL;
+	asprintf(&interruptFile, "/sys/class/gpio/gpio%d/edge",GPIOPin);
+	
+	//Set detection condition
+	fp = fopen(interruptFile,"w");
+	if (fp == NULL){
+		fprintf(stderr,"Unable to set detection type on pin %d\n",p);
+		exit(1);
+	}else{
+		switch(m){
+			case RISING: fprintf(fp,"rising");break;
+			case FALLING: fprintf(fp,"falling");break;
+			default: fprintf(fp,"both");break;
+		}
+		
+	}
+	fclose(fp);
+	
+	if(*threadId == 0){
+		//Create a thread passing the pin and function
+		pthread_create (threadId, NULL, threadFunction, (void *)threadArgs);
+	}else{
+		//First cancel the existing thread for that pin
+		pthread_cancel(*threadId);
+		//Create a thread passing the pin, function and mode
+		pthread_create (threadId, NULL, threadFunction, (void *)threadArgs);
+	}
+	
+}
 
-extern void setup();	// must be declared in the '<application>.cpp' file
-extern void loop();	// must be declared in the '<application>.cpp' file
-			// the <application>.cpp' file must start with: #include "Arduino.h"
+void detachInterrupt(uint8_t p){
+	int GPIOPin = p;
+	
+	FILE *fp = fopen("/sys/class/gpio/unexport","w");
+	if (fp == NULL){
+		fprintf(stderr,"Unable to unexport pin %d for interrupt\n",p);
+		exit(1);
+	}else{
+		fprintf(fp,"%d",GPIOPin); 
+	}
+	fclose(fp);
+	
+	pthread_t *threadId = getThreadIdFromPin(p);
+	pthread_cancel(*threadId);
+}
 
-int main( int argc, char **argv)
+
+//////////////////////
+// BIT MANIPULATION //
+//////////////////////
+
+void bitWrite( uint8_t &data, uint8_t bit, uint8_t value)
 {
-    pwmgo[0].pwmworker = pwm0loop;
-    pwmgo[1].pwmworker = pwm1loop;
-    pwmgo[2].pwmworker = pwm2loop;
-    pwmgo[3].pwmworker = pwm3loop;
-    pwmgo[4].pwmworker = pwm4loop;
-    for ( int i = 0; i < pwmgoMax; i++ ) {
-	pwmgo[i].pin = -1;
-	pwmgo[i].high = -1;
-	pwmgo[i].low = -1;
-	pwmgo[i].go = false;
-    }
+	uint8_t b = (1 << bit);
+	if ( value )
+		data |= b;
+	else
+		data &= (b xor 0xFF);
+}
 
-    g_start = chrono::high_resolution_clock::now();
+void bitSet( uint8_t &data, uint8_t bit)
+{
+	uint8_t b = (1 << bit);
+	data |= b;
+}
 
-    printf( "Starting 'setup'\n\n");
-    setup();
-    printf( "Starting 'loop'\n\n");
-    while ( 1 ) loop();
+void bitClear( uint8_t &data, uint8_t bit)
+{
+	uint8_t b = (1 << bit);
+	data &= (b xor 0xFF);
+}
+
+uint8_t bitRead( uint8_t data, uint8_t bit, uint8_t value)
+{
+	uint8_t b = data & (1 << bit);
+	return (b ? 1 : 0);
+}
+
+uint32_t bit( uint8_t bit)
+{
+	return 1 << bit;
+}
+
+uint8_t lowByte( uint16_t byte)
+{
+	return (uint8_t) byte & 0x00FF;
+}
+
+uint8_t highByte( uint16_t byte)
+{
+	return (uint8_t) (byte & 0xFF00) >> 8;
 }
 
 //////////////////
@@ -864,221 +1119,539 @@ int gpio::openGpio(uint8_t pin){
 // END CLASS GPIO //
 ////////////////////
 
-/////////////////////
-// ATTACHINTERRUPT //
-// DETACHINTERRUPT //
-/////////////////////
+///////////////////
+// ARDUINO START //
+///////////////////
 
-struct bcm2835_peripheral{
-    unsigned long addr_p;
-    int mem_fd;
-    void *map;
-    volatile unsigned int *addr;
-};
+extern void setup();	// must be declared in the '<application>.cpp' file
+extern void loop();	// must be declared in the '<application>.cpp' file
+			// the <application>.cpp' file must start with: #include "Arduino.h"
+/////////
+// GTK //
+/////////
 
-struct ThreadArg{
-    void (*func)();
-    int pin;
-};
+#ifdef GTK
+#include <gtk/gtk.h>
 
-pthread_t idThread2;
-pthread_t idThread3;
-pthread_t idThread4;
-pthread_t idThread5;
-pthread_t idThread6;
-pthread_t idThread7;
-pthread_t idThread8;
-pthread_t idThread9;
-pthread_t idThread10;
-pthread_t idThread11;
-pthread_t idThread12;
-pthread_t idThread13;
+static bool g_running = true;
+static GtkWidget *WINDOW;
+static GtkWidget *BODY;
+static GtkWidget *DRAG = NULL;
+static WidgetList CURSOR;
+static bool canDrag = false;
+CALLBACK mouseLClick = NULL;
+CALLBACK mouseRClick = NULL;
+CALLBACK mouseLRelease = NULL;
+CALLBACK mouseRRelease = NULL;
+static uint16_t mouseXpos = 0;
+static uint16_t mouseYpos = 0;
+static uint16_t widgetXoffs = 0;
+static uint16_t widgetYoffs = 0;
+static uint16_t dragW = 0; // drag widget sizes
+static uint16_t dragH = 0;
+static uint16_t fieldL = 0; // drag field sizes
+static uint16_t fieldR = 0;
+static uint16_t fieldT = 0;
+static uint16_t fieldB = 0;
 
-#define IOBASE   0x3f000000
-struct bcm2835_peripheral bsc_rev1 = {IOBASE + 0X205000};
-struct bcm2835_peripheral bsc_rev2 = {IOBASE + 0X804000};
-struct bcm2835_peripheral bsc0;
-
-int getBoardRev()
+struct StickyArea
 {
-	FILE *cpu_info;
-	char line [120];
-	char *c,finalChar;
-	
-	if ((cpu_info = fopen("/proc/cpuinfo","r"))==NULL){
-		fprintf(stderr,"Unable to open /proc/cpuinfo. Cannot determine board reivision.\n");
-		exit(1);
-	}
-	
-	while (fgets (line,120,cpu_info) != NULL){
-		if(strncmp(line,"Revision",8) == 0) break;
-	}
-	
-	fclose(cpu_info);
-	
-	if (line == NULL){
-		fprintf (stderr, "Unable to determine board revision from /proc/cpuinfo.\n") ;
-		exit(1);
-	}
-	
-	for (c = line ; *c ; ++c)
-    if (isdigit (*c))
-      break ;
+    uint16_t	left;
+    uint16_t	top;
+    uint16_t	right;
+    uint16_t	bottom;
+    uint16_t	dx;
+    uint16_t	dy;
+};
 
-	if (!isdigit (*c)){
-		fprintf (stderr, "Unable to determine board revision from /proc/cpuinfo\n") ;
-		fprintf (stderr, "  (Info not found in: %s\n", line) ;
-		exit(1);
-	}
-	
-	finalChar = c [strlen (c) - 2] ;
-	
-	if ((finalChar == '2') || (finalChar == '3')){
-		bsc0 = bsc_rev1;
-		return 1;
-	}else{
-		bsc0 = bsc_rev2;
-		return 2;
-	}
+LinkedList<StickyArea*> STAR;
+LinkedList<WidgetList*>	TABLE;
+LinkedList<uint16_t>	HALIGN;
+LinkedList<uint16_t>	VALIGN;
+
+String IMAGESTYLE =
+    String( ".gtkstyle { ") +
+    String( "padding: 0; ") +
+    String( "}");
+
+String EDITSTYLE =
+    String( ".gtkstyle { ") +
+    String( "font-size: 11px; ") +
+    String( "padding-left: 5px; padding-right: 5px; padding-top: 0; padding-bottom: 0; ") +
+    String( "}");
+
+String LABELSTYLE =
+    String( ".gtkstyle { ") +
+    String( "font-size: 11px; ") +
+    String( "padding-left: 5px; padding-right: 5px; padding-top: 0; padding-bottom: 0; ") +
+    String( "}");
+
+String BUTTONSTYLE =
+    String( ".gtkstyle { ") +
+    String( "font-size: 11px; ") +
+    String( "padding-left: 5px; padding-right: 5px; padding-top: 0; padding-bottom: 0; ") +
+    String( "}");
+
+String CHECKSTYLE =
+    String( ".gtkstyle { ") +
+    String( "font-size: 11px; ") +
+    String( "padding-left: 5px; padding-right: 5px; padding-top: 0; padding-bottom: 0; ") +
+    String( "}");
+
+// interface
+// ---------
+
+void setTitle( String title)
+{
+    gtk_window_set_title( GTK_WINDOW( WINDOW), title.c_str());
 }
 
-pthread_t *getThreadIdFromPin(int pin){
-	switch(pin){
-		case 2: return &idThread2; break;
-		case 3: return &idThread3; break;
-		case 4: return &idThread4; break;
-		case 5: return &idThread5; break;
-		case 6: return &idThread6; break;
-		case 7: return &idThread7; break;
-		case 8: return &idThread8; break;
-		case 9: return &idThread9; break;
-		case 10: return &idThread10; break;
-		case 11: return &idThread11; break;
-		case 12: return &idThread12; break;
-		case 13: return &idThread13; break;
-	}
-    return 0; // should never come here
+void setSize( uint16_t width, uint16_t height)
+{
+    gtk_window_set_default_size( GTK_WINDOW( WINDOW), width, height);
 }
 
-/* This is the function that will be running in a thread if
- * attachInterrupt() is called */
-void * threadFunction(void *args){
-	ThreadArg *arguments = (ThreadArg *)args;
-	int pin = arguments->pin;
-	
-	int GPIO_FN_MAXLEN = 32;
-	int RDBUF_LEN = 5;
-	
-	char fn[GPIO_FN_MAXLEN];
-	int fd,ret;
-	struct pollfd pfd;
-	char rdbuf [RDBUF_LEN];
-	
-	memset(rdbuf, 0x00, RDBUF_LEN);
-	memset(fn,0x00,GPIO_FN_MAXLEN);
-	
-	snprintf(fn, GPIO_FN_MAXLEN-1, "/sys/class/gpio/gpio%d/value",pin);
-	fd=open(fn, O_RDONLY);
-	if(fd<0){
-		perror(fn);
-		exit(1);
-	}
-	pfd.fd=fd;
-	pfd.events=POLLPRI;
-	
-	ret=unistd::read(fd,rdbuf,RDBUF_LEN-1);
-	if(ret<0){
-		perror("Error reading interrupt file\n");
-		exit(1);
-	}
-	
-	while(1){
-		memset(rdbuf, 0x00, RDBUF_LEN);
-		unistd::lseek(fd, 0, SEEK_SET);
-		ret=poll(&pfd, 1, -1);
-		if(ret<0){
-			perror("Error waiting for interrupt\n");
-			unistd::close(fd);
-			exit(1);
-		}
-		if(ret==0){
-			printf("Timeout\n");
-			continue;
-		}
-		ret=unistd::read(fd,rdbuf,RDBUF_LEN-1);
-		if(ret<0){
-			perror("Error reading interrupt file\n");
-			exit(1);
-		}
-		//Interrupt. We call user function.
-		arguments->func();
-	}
+void* create( uint8_t type, String name)
+{
+    return create( type, name, "");
 }
 
-
-void attachInterrupt( uint8_t p,void (*f)(), uint m){
-	int GPIOPin = p;
-	pthread_t *threadId = getThreadIdFromPin(p);
-	struct ThreadArg *threadArgs = (ThreadArg *)malloc(sizeof(ThreadArg));
-	threadArgs->func = f;
-	threadArgs->pin = GPIOPin;
-	
-	//Export pin for interrupt
-	FILE *fp = fopen("/sys/class/gpio/export","w");
-	if (fp == NULL){
-		fprintf(stderr,"Unable to export pin %d for interrupt\n",p);
-		exit(1);
-	}else{
-		fprintf(fp,"%d",GPIOPin); 
-	}
-	fclose(fp);
-	
-	//The system to create the file /sys/class/gpio/gpio<GPIO number>
-	//So we wait a bit
-	delay(1L);
-	
-	char * interruptFile = NULL;
-	asprintf(&interruptFile, "/sys/class/gpio/gpio%d/edge",GPIOPin);
-	
-	//Set detection condition
-	fp = fopen(interruptFile,"w");
-	if (fp == NULL){
-		fprintf(stderr,"Unable to set detection type on pin %d\n",p);
-		exit(1);
-	}else{
-		switch(m){
-			case RISING: fprintf(fp,"rising");break;
-			case FALLING: fprintf(fp,"falling");break;
-			default: fprintf(fp,"both");break;
-		}
-		
-	}
-	fclose(fp);
-	
-	if(*threadId == 0){
-		//Create a thread passing the pin and function
-		pthread_create (threadId, NULL, threadFunction, (void *)threadArgs);
-	}else{
-		//First cancel the existing thread for that pin
-		pthread_cancel(*threadId);
-		//Create a thread passing the pin, function and mode
-		pthread_create (threadId, NULL, threadFunction, (void *)threadArgs);
-	}
-	
+void applyStyle( GtkWidget* widget, String cssstyle)
+{
+    GtkCssProvider* style;
+    GtkStyleContext* context;
+    style = gtk_css_provider_new();
+    gtk_css_provider_load_from_data( style, cssstyle.c_str(), -1, NULL);
+    context = gtk_widget_get_style_context( widget);
+    gtk_style_context_add_provider( context,
+        GTK_STYLE_PROVIDER( style), GTK_STYLE_PROVIDER_PRIORITY_USER);
+    gtk_style_context_add_class( context, "gtkstyle");
+    g_object_unref( style);
 }
 
-void detachInterrupt(uint8_t p){
-	int GPIOPin = p;
-	
-	FILE *fp = fopen("/sys/class/gpio/unexport","w");
-	if (fp == NULL){
-		fprintf(stderr,"Unable to unexport pin %d for interrupt\n",p);
-		exit(1);
-	}else{
-		fprintf(fp,"%d",GPIOPin); 
-	}
-	fclose(fp);
-	
-	pthread_t *threadId = getThreadIdFromPin(p);
-	pthread_cancel(*threadId);
+void* create( uint8_t type, String name, String param)
+{
+    GtkWidget *item;
+
+    switch ( type ) {
+        case tImage:	item = gtk_image_new_from_file( param.c_str());
+                        applyStyle( item, IMAGESTYLE);
+                        break;
+        case tLabel:	item = gtk_label_new( param.c_str());
+                        applyStyle( item, LABELSTYLE);
+                        break;
+        case tEdit:	    item = gtk_entry_new();
+                        gtk_entry_set_width_chars( (GtkEntry*) item, 1);
+                        gtk_entry_set_text( (GtkEntry*) item, param.c_str());
+                        applyStyle( item, EDITSTYLE);
+                        break;
+        case tButton:	item = gtk_button_new_with_label( param.c_str()); // button text
+                        applyStyle( item, BUTTONSTYLE);
+                        break;
+        case tCheck:	item = gtk_check_button_new_with_label( param.c_str()); // button tekst
+                        applyStyle( item, CHECKSTYLE);
+                        break;
+//	    case tRadio:	item = gtk_radio_button_new_with_label( ); break;
+    }
+    gtk_widget_set_name( item, name.c_str());
+    gtk_fixed_put( (GtkFixed*) BODY, item, 0, 0);
+    return item;
 }
+
+void appendDefaultStyle( uint8_t type, String style)
+{
+    String st =
+        String( ".gtkstyle { ") +
+        String( "font-size: 11px; ") +
+        String( "padding-left: 5px; padding-right: 5px; padding-top: 0; padding-bottom: 0; ") +
+        style + " }";
+
+    switch ( type ) {
+        case tImage:	IMAGESTYLE = st; break;
+        case tLabel:	LABELSTYLE = st; break;
+        case tEdit:	    EDITSTYLE = st; break;
+        case tButton:	BUTTONSTYLE = st; break;
+        case tCheck:	CHECKSTYLE = st; break;
+//	    case tRadio:	RADIONSTYLE = st; break;
+    }
+}
+
+void setSize( void* widget, uint16_t width, uint16_t height)
+{
+    gtk_widget_set_size_request( (GtkWidget*) widget, width, height);
+}
+
+void place( void* widget, uint16_t x, uint16_t y)
+{
+    gtk_fixed_move( (GtkFixed*) BODY, (GtkWidget*) widget, x, y);
+}
+
+String name( void* widget)
+{
+    if ( !widget ) return "";
+    return gtk_widget_get_name( (GtkWidget*) widget);
+}
+
+void destroy( void* widget)
+{
+    gtk_widget_destroy( (GtkWidget*) widget);
+}
+
+void show( void* widget)
+{
+    show( widget, true);
+}
+
+void show( void* widget, bool show)
+{
+    if ( show )
+	gtk_widget_show( (GtkWidget*) widget);
+    else
+	gtk_widget_hide( (GtkWidget*) widget);
+}
+
+void hide( void* widget)
+{
+    gtk_widget_hide( (GtkWidget*) widget);
+}
+
+void drag( void* widget)
+{
+    DRAG = (GtkWidget*) widget;
+    if ( widget ) {
+	GtkAllocation rect;
+	gtk_widget_get_allocation( DRAG, &rect);
+	dragH = rect.width;
+	dragW = rect.height;
+    }
+    else {
+	dragH = 0;
+	dragW = 0;
+    }
+}
+
+void drop()
+{
+    DRAG = NULL;
+}
+
+void setDragField( uint16_t left, uint16_t top, uint16_t right, uint16_t bottom)
+{
+    fieldL = left;
+    fieldT = top;
+    fieldR = right;
+    fieldB = bottom;
+}
+
+void setText( void* widget, uint8_t type, String text)
+{
+    switch ( type ) {
+	case tEdit:	gtk_entry_set_text( (GtkEntry*) widget, text.c_str()); break;
+	case tLabel:	gtk_label_set_text( (GtkLabel*) widget, text.c_str()); break;
+    }
+}
+
+String text( void* widget, uint8_t type)
+{
+    switch ( type ) {
+	case tEdit:	return gtk_entry_get_text( (GtkEntry*) widget);
+	case tLabel:	return gtk_label_get_text( (GtkLabel*) widget);
+    }
+    return "";
+}
+
+uint16_t mouseX()
+{
+    return mouseXpos;
+}
+
+uint16_t mouseY()
+{
+    return mouseYpos;
+}
+
+void *mouseWidget( String wname)
+{
+    int ix = -1;
+    if ( wname == "" && CURSOR.size() )
+        ix = 0;
+    else
+        for ( ix = CURSOR.size() - 1; ix >= 0; ix-- )
+            if ( wname == name( CURSOR.at( ix)) )
+                break;
+    if ( ix >= 0 ) {
+        GtkAllocation rect;
+	GtkWidget* widget = (GtkWidget*) CURSOR.at( ix);
+        gtk_widget_get_allocation( widget, &rect);
+        widgetXoffs = mouseXpos - rect.x;
+        widgetYoffs = mouseYpos - rect.y;
+        return widget;
+    }
+    return NULL;
+}
+
+void mouse( uint16_t &x, uint16_t &y)
+{
+    x = mouseXpos;
+    y = mouseYpos;
+}
+
+void callOnMouseLClick( CALLBACK routine)
+{
+    mouseLClick = routine;
+}
+
+void callOnMouseRClick( CALLBACK routine)
+{
+    mouseRClick = routine;
+}
+
+void callOnMouseLRelease( CALLBACK routine)
+{
+    mouseLRelease = routine;
+}
+
+void callOnMouseRRelease( CALLBACK routine)
+{
+    mouseRRelease = routine;
+}
+
+uint8_t addStickyArea( uint16_t left, uint16_t top, uint16_t width, uint16_t height)
+{
+    StickyArea* s = new StickyArea;
+    s->left = left;
+    s->top = top;
+    s->right = left + width;
+    s->bottom = top + height;
+    return STAR.add( s);
+}
+
+void removeStickyArea( uint16_t ix)
+{
+    if  ( ix < STAR.size() ) {
+	delete STAR.at( ix);
+	STAR.removeAt( ix);
+    }
+}
+
+void clearStickyArea()
+{
+    STAR.removeAll();
+}
+
+void addRow( WidgetList* widgets)
+{
+    TABLE.add( widgets);
+}
+
+void setRowValues( uint8_t row, StringList &values)
+{
+    if ( row < TABLE.size() ) {
+	WidgetList* r = TABLE.at( row);
+	for ( int i = 0; i < r->size() && i < values.size(); i++ )
+	    setText( r->at( i), tEdit, values.at( i));
+    }
+}
+
+void getRowValues( uint8_t row, StringList& values)
+{
+    if ( row < TABLE.size() ) {
+	WidgetList* r = TABLE.at( row);
+	for ( int i = 0; i < r->size(); i++ )
+	    values.add( text( r->at( i), tEdit));
+    }
+}
+
+// system
+// ------
+
+int stickyArea( uint16_t x, uint16_t y)
+{
+    int sticky = -1;
+    uint16_t dx, dy, da;
+    for ( int i = 0; i < STAR.size(); i++ ) {
+        StickyArea* s = STAR.at( i);
+
+        if ( x < s->left ) dx = s->left - x;
+        else
+        if ( x > s->right ) dx = x - s->right;
+        else
+            dx = 0;
+
+        if ( y < s->top ) dy = s->top - y;
+        else
+        if ( y > s->bottom ) dy = y - s->bottom;
+        else
+            dy = 0;
+
+        if ( (dx + dy) / 2 < da ) {
+            da = (dx + dy) / 2;
+            sticky = i;
+        }
+    }
+    return sticky;
+}
+
+void findWidget( uint16_t x, uint16_t y)
+{
+    CURSOR.removeAll();
+    GList *children = gtk_container_get_children( GTK_CONTAINER( BODY));
+    GList *child;
+    GtkAllocation rect;
+    for ( child = children; child != NULL; child = child->next) {
+        GtkWidget *widget = (GtkWidget*) child->data;
+        gtk_widget_get_allocation( widget, &rect);
+        if ( x > rect.x && x < (rect.x + rect.width) &&
+             y > rect.y && y < (rect.y + rect.height) )
+            CURSOR.add( widget);
+    }
+}
+
+gboolean onIdle( gpointer data)
+{
+    loop();
+    return g_running;
+}
+
+gboolean onWindowClose( GtkWidget *widget, GdkEvent *event, gpointer data)
+{
+    g_running = false;
+    return false;
+}
+
+gboolean onMouseMove( GtkWidget *widget, GdkEventMotion *event)
+{
+    if ( canDrag && DRAG ) {
+        uint16_t x = event->x - widgetXoffs;
+        uint16_t y = event->y - widgetYoffs;
+        if ( fieldR || fieldB ) {
+            if ( x < fieldL ) x = fieldL;
+            if ( y < fieldT ) y = fieldT;
+            if ( x > fieldR - dragW ) x = fieldR - dragW;
+            if ( y > fieldB - dragH ) y = fieldB - dragH;
+        }
+
+        int ix = stickyArea( x, y);
+        if ( ix >= 0 ) {
+            x = STAR.at( ix)->left;
+            y = STAR.at( ix)->top;
+        }
+
+        gtk_fixed_move( (GtkFixed*) BODY, DRAG, x, y);
+    }
+    return true;
+}
+
+gboolean onMouseClick( GtkWidget *widget, GdkEventButton *event)
+{
+    if ( gtk_widget_get_window( BODY) != event->window ) {
+        CURSOR.removeAll();
+        return TRUE;
+    }
+    mouseXpos = event->x;
+    mouseYpos = event->y;
+    findWidget( mouseXpos, mouseYpos);
+    switch ( event->button ) {
+        case 1 :    if ( mouseLClick ) mouseLClick();
+                    canDrag = true;
+                    break;
+        case 3 :    if ( mouseRClick ) mouseRClick();
+                    break;
+    }
+    return true;
+}
+
+gboolean onMouseRelease( GtkWidget *widget, GdkEventButton *event)
+{
+    if ( gtk_widget_get_window( BODY) != event->window ) {
+        CURSOR.removeAll();
+        return TRUE;
+    }
+    mouseXpos = event->x;
+    mouseYpos = event->y;
+    findWidget( mouseXpos, mouseYpos);
+    switch ( event->button ) {
+        case 1 :    if ( mouseLRelease ) mouseLRelease();
+                    canDrag = false;
+                    break;
+        case 3 :    if ( mouseRRelease ) mouseRRelease();
+                    break;
+    }
+    return true;
+}
+
+void activate( GtkApplication *app, gpointer user_data)
+{
+    WINDOW = gtk_application_window_new( app);
+    gtk_window_set_title( GTK_WINDOW( WINDOW), "GTK-APP");
+    gtk_window_set_default_size( GTK_WINDOW( WINDOW), 250, 0);
+    gtk_window_set_position( GTK_WINDOW( WINDOW), GTK_WIN_POS_CENTER);
+    g_signal_connect( G_OBJECT( WINDOW), "delete-event", G_CALLBACK( onWindowClose), NULL);
+
+    g_idle_add( onIdle, WINDOW);
+
+    g_signal_connect( WINDOW, "motion_notify_event", G_CALLBACK( onMouseMove), NULL);
+    gtk_widget_set_events( WINDOW, GDK_POINTER_MOTION_MASK);
+
+    g_signal_connect( WINDOW, "button_press_event", G_CALLBACK( onMouseClick), NULL);
+    gtk_widget_set_events( WINDOW, GDK_BUTTON_PRESS_MASK);
+
+    g_signal_connect( WINDOW, "button_release_event", G_CALLBACK( onMouseRelease), NULL);
+    gtk_widget_set_events( WINDOW, GDK_BUTTON_RELEASE_MASK);
+
+    BODY = gtk_fixed_new();
+    gtk_container_add( GTK_CONTAINER( WINDOW), BODY);
+    gtk_widget_set_name( BODY, "BODY");
+
+    g_print( "Starting 'setup'\n\n");
+    setup();
+
+    gtk_widget_show_all( WINDOW);
+
+    g_print( "Starting 'loop'\n\n");
+}
+#endif
+
+//////////
+// MAIN //
+//////////
+
+
+#ifdef GTK
+int main( int argc, char **argv)
+{
+    g_start = chrono::high_resolution_clock::now();
+
+    GtkApplication *app;
+    int status;
+
+    app = gtk_application_new( "nl.devicelib", G_APPLICATION_FLAGS_NONE);
+    g_signal_connect( app, "activate", G_CALLBACK( activate), NULL);
+    status = g_application_run( G_APPLICATION( app), argc, argv);
+    g_object_unref( app);
+
+    return status;
+}
+#else
+int main( int argc, char **argv)
+{
+    pwmgo[0].pwmworker = pwm0loop;
+    pwmgo[1].pwmworker = pwm1loop;
+    pwmgo[2].pwmworker = pwm2loop;
+    pwmgo[3].pwmworker = pwm3loop;
+    pwmgo[4].pwmworker = pwm4loop;
+    for ( int i = 0; i < pwmgoMax; i++ ) {
+	pwmgo[i].pin = -1;
+	pwmgo[i].high = -1;
+	pwmgo[i].low = -1;
+	pwmgo[i].go = false;
+    }
+
+    g_start = chrono::high_resolution_clock::now();
+
+    printf( "Starting 'setup'\n\n");
+    setup();
+    printf( "Starting 'loop'\n\n");
+    while ( 1 ) loop();
+}
+#endif

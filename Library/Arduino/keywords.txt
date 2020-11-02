@@ -27,6 +27,7 @@ RealTime	KEYWORD1
 Rfid	KEYWORD1
 RgbLed	KEYWORD1
 Rotary	KEYWORD1
+Scale   KEYWORD1
 Sensor	KEYWORD1
 Stepper	KEYWORD1
 Switch	KEYWORD1
@@ -79,6 +80,7 @@ insert	KEYWORD2
 insertTone	KEYWORD2
 isOn	KEYWORD2
 kelvin	KEYWORD2
+kg  KEYWORD2
 kph	KEYWORD2
 latitude	KEYWORD2
 leapyear	KEYWORD2

@@ -4,7 +4,7 @@
 // Rewritten by Søren Thing Andersen (access.thing.dk), fall of 2013 (Translation to English, refactored, comments, anti collision, cascade levels.)
 // Extended by Tom Clement with functionality to write to sector 0 of UID changeable Mifare cards.
 // Repuposed to fit the Raspberry Pi
-// Adjusted to fit the architecture of the BmLib repository.
+// Adjusted to fit the architecture of the DeviceLib repository.
 
 #ifdef RPI
 #include "ArduinoCore.h"
@@ -54,7 +54,7 @@ void Rfid::setSPIConfig()
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
-// Compatable functions with BmLib
+// Compatable functions with DeviceLib
 /////////////////////////////////////////////////////////////////////////////////////
 
 void Rfid::setPin( uint8_t pinIrq, uint8_t pinRst) // dummy to keep in line with PN532 class

@@ -5,7 +5,7 @@
 // please support Adafruit and open-source hardware by purchasing
 // products from Adafruit!
 //
-// Adjusted to fit the architecture of the BmLib repository.
+// Adjusted to fit the architecture of the DeviceLib repository.
 // Although the Adafruit PN532 class supports both I2C and SPI,
 // here the class supports I2C only.
 

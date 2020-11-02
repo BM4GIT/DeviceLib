@@ -8,7 +8,7 @@
 	Created by Ivan Seidel Gomes, March, 2013.
 	Released into the public domain.
 
-	Adjustments for BmLib environment (2020):
+	Adjustments for DeviceLib environment (2020):
 	* added operator []
 	* renamed 'add( ix, item)' to 'insert( ix, item)'
 	* renamed 'get' to 'at'

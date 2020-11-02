@@ -4,7 +4,7 @@
 // Rewritten by Søren Thing Andersen (access.thing.dk), fall of 2013 (Translation to English, refactored, comments, anti collision, cascade levels.)
 // Extended by Tom Clement with functionality to write to sector 0 of UID changeable Mifare cards.
 // Repuposed to fit the Raspberry Pi
-// Adjusted to fit the architecture of the BmLib repository.
+// Adjusted to fit the architecture of the DeviceLib repository.
 
 #ifndef MFRC522_h
 #define MFRC522_h
@@ -247,7 +247,7 @@ public:
 	void setSPIConfig();
 	
 	/////////////////////////////////////////////////////////////////////////////////////
-	// Functions for compatability with BmLib
+	// Functions for compatability with DeviceLib
 	/////////////////////////////////////////////////////////////////////////////////////
 	void setPin( uint8_t pinIrq, uint8_t pinRst = 0);
 	bool init();

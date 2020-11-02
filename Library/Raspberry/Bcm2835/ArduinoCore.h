@@ -12,14 +12,15 @@
 *  Version 2.4 (For Raspberry Pi 2)
 *  Author: Sergio Martinez, Ruben Martin
 *
-*  Version BmLib, 2020 (For BmLib library on Raspberry)
+*  Version DeviceLib, 2020 (For DeviceLib library on Raspberry)
 *  The complete library has been split up to mirror the arduino configuration.
-*  These are the components in the BmLib library:
+*  These are the components in the DeviceLib library:
 *  > BcmCore		- all helper stuff
 *  > ArduinoCore	- global routines like pinMode, digitalWrite, etc. and the Serial interface
 *  > Wire			- the I2C interface
 *  > SPI			- the SPI interface
-*  Some minor changes have been made to meet the structure of the BmLib library.
+*  Some minor changes have been made to meet the structure of the DeviceLib library.
+*
 */
 
 #ifndef ARDUINOCORE_H
@@ -28,19 +29,23 @@
 #include <thread>
 #include <chrono>
 #include "BcmCore.h"
-#include "ArduinoString.h"
+#include "linkedlist.h"
 
 using namespace std;
 
-#define sprint			Serial.print
-#define sprintln		Serial.println
-#define sflush			Serial.flush
+typedef uint8_t byte;
 
-typedef chrono::time_point<chrono::high_resolution_clock>	hirestime;
-extern hirestime currentTime();
-extern void localTime( tm &lt, uint32_t &msec);
-extern ulong diffMillis( hirestime stop, hirestime start);
-extern ulong diffMicros( hirestime stop, hirestime start);
+// HELPER
+
+struct ThreadArg{
+    void (*func)();
+    int pin;
+};
+
+pthread_t *getThreadIdFromPin(int pin);
+void * threadFunction(void *args);
+
+// ARDUINO CORE
 
 #define OUTPUT			0
 #define INPUT			1
@@ -53,31 +58,32 @@ extern ulong diffMicros( hirestime stop, hirestime start);
 #define FALLING			3
 #define CHANGE			4
 
-typedef uint8_t byte;
+// delay functions reside in bcm2835.h
+extern long millis();
+extern long micros();
 
-// GENERAL ARDUINO FUNCTIONS
-
-void pinMode( int pin, int mode);
+extern void pinMode( int pin, int mode);
 #define digitalWrite( pin, state)	bcm2835_gpio_write( pin, state)
 #define digitalRead( pin)			bcm2835_gpio_lev( pin)
-void analogWrite( int pin, int level);
-int analogRead (int pin);
-void attachInterrupt(int p,void (*f)(), uint m);
-void detachInterrupt(int p);
+#ifdef GTK // GTK and pwm do not go together
+#define analogWrite( pin, state)	bcm2835_gpio_write( pin, state)
+#else
+extern void analogWrite( int pin, int level);
+#endif
+extern int analogRead (int pin);
 
-long millis();
-long micros();
+extern void attachInterrupt(int p,void (*f)(), uint m);
+extern void detachInterrupt(int p);
 
-struct ThreadArg{
-    void (*func)();
-    int pin;
-};
+extern void bitWrite( uint8_t &data, uint8_t bit, uint8_t value);
+extern void bitSet( uint8_t &data, uint8_t bit);
+extern void bitClear( uint8_t &data, uint8_t bit);
+extern uint8_t bitRead( uint8_t data, uint8_t bit, uint8_t value);
+extern uint32_t bit( uint8_t bit);
+extern uint8_t lowByte( uint16_t byte);
+extern uint8_t highByte( uint16_t byte);
 
-// Helper functions
-pthread_t *getThreadIdFromPin(int pin);
-void * threadFunction(void *args);
-
-// ARDUINO SERIAL INTERFACE
+// ARDUINO SERIAL
 
 #define SERIAL_5N1	0
 #define SERIAL_6N1	1
@@ -104,8 +110,6 @@ void * threadFunction(void *args);
 #define SERIAL_7O2	22
 #define SERIAL_8O2	23
 
-// ARDUINO SERIAL MONITOR
-
 class SerialRPi
 {
 public:
@@ -116,7 +120,7 @@ public:
 	uint availableForWrite();
 
 	void begin( const ulong baud, const uint config = SERIAL_8N1);
-	void end(); 
+	void end();
 
 	bool find( const String search);
 	bool findUntil( const String search, const String stop = "");
@@ -160,5 +164,83 @@ private:
 
 extern SerialRPi Serial;
 extern SerialRPi Serial1;
+
+
+// For the remaining part:
+//
+// Copyright 2020 D.E.Repolev
+//
+// This file is part of DeviceLib. DeviceLib is free software and you may distribute it under
+// the terms of the GNU General Public License (version 3 or later) as published by the
+// Free Software Foundation. The full license text you find at 'https://www.gnu.org/licenses'.
+// Disclaimer: DeviceLib is distributed without any warranty.
+
+
+// CONVENIENT
+
+#define sprint			Serial.print
+#define sprintln		Serial.println
+#define sflush			Serial.flush
+
+// HELPER
+
+typedef void (*CALLBACK)();
+typedef LinkedList<void*>  WidgetList;
+
+typedef chrono::time_point<chrono::high_resolution_clock>	hirestime;
+extern hirestime currentTime();
+extern void localTime( tm &lt, uint32_t &msec);
+extern ulong diffMillis( hirestime stop, hirestime start);
+extern ulong diffMicros( hirestime stop, hirestime start);
+
+
+#ifdef GTK
+
+#define tLabel	1
+#define tImage	2
+#define tButton	3
+#define tCheck	4
+#define tRadio	5
+#define tEdit	6
+
+extern void setTitle( String title);
+extern void setSize( uint16_t width, uint16_t height);
+
+extern void* create( uint8_t type, String name);
+extern void* create( uint8_t type, String name, String param);
+extern void appendDefaultStyle( uint8_t type, String style);
+extern void setSize( void* widget, uint16_t width, uint16_t height);
+extern void place( void* widget, uint16_t x, uint16_t y);
+extern String name( void* widget);
+extern void destroy( void* widget);
+extern void show( void* widget);
+extern void show( void* widget, bool show);
+extern void hide( void* widget);
+extern void drag( void* widget);
+extern void drop();
+extern void setDragField( uint16_t left, uint16_t top, uint16_t right, uint16_t bottom);
+
+extern void setText( void* widget, uint8_t type, String text);
+extern String text( void* widget, uint8_t type);
+
+extern uint16_t mouseX();
+extern uint16_t mouseY();
+extern void mouse( uint16_t &x, uint16_t &y);
+extern void *mouseWidget( String name = "");
+
+extern void callOnMouseLClick( CALLBACK routine);
+extern void callOnMouseRClick( CALLBACK routine);
+extern void callOnMouseLRelease( CALLBACK routine);
+extern void callOnMouseRRelease( CALLBACK routine);
+
+uint8_t addStickyArea( uint16_t left, uint16_t top, uint16_t width, uint16_t height);
+void removeStickyArea( uint16_t ix);
+void clearStickyArea();
+
+void addRow( WidgetList* widgets);
+void setRowValues( uint8_t row, StringList &values);
+void getRowValues( uint8_t row, StringList& values);
+
+#endif
 
 #endif // ARDUINOCORE_H

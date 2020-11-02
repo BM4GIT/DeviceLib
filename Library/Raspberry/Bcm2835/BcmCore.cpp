@@ -12,14 +12,14 @@
 *  Version 2.4 (For Raspberry Pi 2)
 *  Author: Sergio, 2020 Martinez, Ruben Martin
 *
-*  Version BmLib (For BmLib library on Raspberry)
+*  Version DeviceLib (For DeviceLib library on Raspberry)
 *  The complete library has been split up to mirror the arduino configuration.
-*  These are the components in the BmLib library:
+*  These are the components in the DeviceLib library:
 *  > BcmCore		- all helper stuff
 *  > ArduinoCore	- global routines like pinMode, digitalWrite, etc. and the Serial interface
 *  > Wire			- the I2C interface
 *  > SPI			- the SPI interface
-*  Some minor changes have been made to meet the structure of the BmLib library.
+*  Some minor changes have been made to meet the structure of the DeviceLib library.
 */
 
 #include <string>
