@@ -71,7 +71,7 @@ StringList SqlClient::nextRow()
 	if ( row ) {
 		uint fields = mysql_num_fields( mresult);
 		for ( uint i = 0; i < fields; i++ )
-			sl.push_back( String( row[i]));
+			sl.add( String( row[i]));
 	}
 	return sl;
 }
@@ -83,7 +83,7 @@ StringList SqlClient::columnHeaders()
 	MYSQL_FIELD *fields = mysql_fetch_fields( mresult);
 	uint cnt = mysql_num_fields( mresult);
 	for ( uint i = 0; i < cnt; i++ )
-		sl.push_back( String( fields[i].name));
+		sl.add( String( fields[i].name));
 	return sl;
 }
 
@@ -119,7 +119,7 @@ String SqlClient::filloutQuery( const String querystr, ...)
     va_list vals;
     va_start( vals, cnt);
     for ( int i = 0; i < cnt; i++ )
-        values.push_back( va_arg( vals, String));
+        values.add( va_arg( vals, String));
     va_end( vals);
 
 	return filloutQuery( querystr, values);

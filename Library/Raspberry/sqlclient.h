@@ -15,9 +15,6 @@
 #else
 
 #include "Arduino.h"
-#include <vector>
-
-typedef vector<String> StringList;
 
 class SqlClient
 {
