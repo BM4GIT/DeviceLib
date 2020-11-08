@@ -974,7 +974,9 @@ void* create( uint8_t type, String name, String param)
                         break;
 //	    case tRadio:	item = gtk_radio_button_new_with_label( ); break;
     }
+    gtk_widget_set_no_show_all( item, true);
     gtk_widget_set_name( item, name.c_str());
+    gtk_widget_show( item);
     gtk_fixed_put( (GtkFixed*) BODY, item, 0, 0);
     return item;
 }
@@ -1081,6 +1083,16 @@ String text( void* widget, uint8_t type)
     return "";
 }
 
+void setCheck( void* widget, bool check)
+{
+    gtk_toggle_button_set_active( (GtkToggleButton*) widget, check);
+}
+
+bool isChecked( void* widget)
+{
+    return gtk_toggle_button_get_active( (GtkToggleButton*) widget);
+}
+
 uint16_t mouseX()
 {
     return mouseXpos;
@@ -1165,21 +1177,21 @@ void addRow( WidgetList* widgets)
     TABLE.add( widgets);
 }
 
-void setRowValues( uint8_t row, StringList &values)
+void setRowValues( uint8_t row, StringList &values, uint8_t type)
 {
     if ( row < TABLE.size() ) {
 	WidgetList* r = TABLE.at( row);
 	for ( int i = 0; i < r->size() && i < values.size(); i++ )
-	    setText( r->at( i), tEdit, values.at( i));
+	    setText( r->at( i), type, values.at( i));
     }
 }
 
-void getRowValues( uint8_t row, StringList& values)
+void getRowValues( uint8_t row, StringList& values, uint8_t type)
 {
     if ( row < TABLE.size() ) {
 	WidgetList* r = TABLE.at( row);
 	for ( int i = 0; i < r->size(); i++ )
-	    values.add( text( r->at( i), tEdit));
+	    values.add( text( r->at( i), type));
     }
 }
 

@@ -123,8 +123,10 @@ bool Rfid::readValue( uint16_t index, String& value)
       return false;
     if ( MIFARE_Read( index, buffer, &bsize) != STATUS_OK )
       return false;
-
-    buffer[16] = 0;
+    int i;
+    for ( i = 15; i >= 0 ; i-- )
+        if ( buffer[i] != ' ' ) break;
+    buffer[i+1] = 0;
     value = String( (char*) buffer);
     return true;
 }

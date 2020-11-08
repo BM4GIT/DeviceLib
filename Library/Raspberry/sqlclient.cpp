@@ -54,6 +54,9 @@ String SqlClient::error()
 
 bool SqlClient::query( const String querystr)
 {
+	// must read all rows from previous query first
+	while ( mysql_fetch_row( mresult) );
+
 	mresult = NULL;
 	if ( !msql ) return false;
 	String qs = querystr;
@@ -63,31 +66,29 @@ bool SqlClient::query( const String querystr)
 	return true;
 }
 
-StringList SqlClient::nextRow()
+void SqlClient::nextRow( StringList& row)
 {
-	StringList sl;
-	if ( !mresult ) return sl;
-	MYSQL_ROW row = mysql_fetch_row( mresult);
-	if ( row ) {
+	row.removeAll();
+	if ( !mresult ) return;
+	MYSQL_ROW r = mysql_fetch_row( mresult);
+	if ( r ) {
 		uint fields = mysql_num_fields( mresult);
 		for ( uint i = 0; i < fields; i++ )
-			sl.add( String( row[i]));
+			row.add( String( r[i]));
 	}
-	return sl;
 }
 
-StringList SqlClient::columnHeaders()
+void SqlClient::columnHeaders( StringList& header)
 {
-	StringList sl;
-	if ( !mresult ) return sl;
+	header.removeAll();
+	if ( !mresult ) return;
 	MYSQL_FIELD *fields = mysql_fetch_fields( mresult);
 	uint cnt = mysql_num_fields( mresult);
 	for ( uint i = 0; i < cnt; i++ )
-		sl.add( String( fields[i].name));
-	return sl;
+		header.add( String( fields[i].name));
 }
 
-String SqlClient::filloutQuery( const String querystr, StringList values)
+String SqlClient::filloutQuery( const String querystr, StringList &values)
 {
     int ix;
     String repl, ret;

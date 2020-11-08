@@ -222,6 +222,8 @@ extern void setDragField( uint16_t left, uint16_t top, uint16_t right, uint16_t 
 
 extern void setText( void* widget, uint8_t type, String text);
 extern String text( void* widget, uint8_t type);
+extern void setCheck( void* widget, bool check);
+extern bool isChecked( void* widget);
 
 extern uint16_t mouseX();
 extern uint16_t mouseY();
@@ -238,8 +240,8 @@ void removeStickyArea( uint16_t ix);
 void clearStickyArea();
 
 void addRow( WidgetList* widgets);
-void setRowValues( uint8_t row, StringList &values);
-void getRowValues( uint8_t row, StringList& values);
+void setRowValues( uint8_t row, StringList &values, uint8_t type = tEdit);
+void getRowValues( uint8_t row, StringList& values, uint8_t type = tEdit);
 
 #endif
 

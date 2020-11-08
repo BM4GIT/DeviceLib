@@ -67,7 +67,7 @@ String::String( const int val, const NUMSYSTEM type)
 					sprintf( s, "%d", i); S = s;
 					break;
 					}
-											   
+
 	}
 }
 
@@ -289,11 +289,15 @@ void String::toCharArray( char buf[], const uint len)
 
 int String::toInt()
 {
+    if ( !S.length() || (S[0] < '0' || S[0]> '9') )
+        return 0;
 	return stoi( S);
 }
 
 double String::toFloat()
 {
+    if ( !S.length() || (S[0] < '0' || S[0]> '9') )
+        return 0;
 	return stod( S);
 }
 

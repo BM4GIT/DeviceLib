@@ -15,6 +15,7 @@
 	* renamed 'remove' to 'removeAt'
 	* added   'removeAll' calling 'clear'
 	* added   'count' calling 'size'
+	* added    'StringList' typedef
 */
 
 
@@ -22,6 +23,9 @@
 #define LinkedList_h
 
 #include <stddef.h>
+#ifdef RPI
+#include "ArduinoString.h"
+#endif
 
 template<class T>
 struct ListNode
@@ -202,7 +206,7 @@ bool LinkedList<T>::add(T _t){
 	ListNode<T> *tmp = new ListNode<T>();
 	tmp->data = _t;
 	tmp->next = NULL;
-	
+
 	if(root){
 		// Already have elements inserted
 		last->next = tmp;
@@ -229,10 +233,10 @@ bool LinkedList<T>::unshift(T _t){
 	tmp->next = root;
 	tmp->data = _t;
 	root = tmp;
-	
+
 	_size++;
 	isCached = false;
-	
+
 	return true;
 }
 
@@ -251,7 +255,7 @@ template<typename T>
 T LinkedList<T>::pop(){
 	if(_size <= 0)
 		return T();
-	
+
 	isCached = false;
 
 	if(_size >= 2){
@@ -303,7 +307,7 @@ T LinkedList<T>::removeAt(int index){
 
 	if(index == 0)
 		return shift();
-	
+
 	if (index == _size-1)
 	{
 		return pop();
@@ -340,5 +344,7 @@ void LinkedList<T>::clear(){
 	while(size() > 0)
 		shift();
 }
+
+typedef LinkedList<String> StringList;
 
 #endif

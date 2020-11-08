@@ -35,8 +35,8 @@ public:
 	// When the end of the rows is reached, an empty list is returned.
 	// The field names of the result are reported via 'columnHeaders'.
 	bool       query( const String querystr);
-	StringList nextRow();
-	StringList columnHeaders();
+	void nextRow( StringList& row);
+	void columnHeaders( StringList& header);
 
     // helper routines
 
@@ -52,7 +52,7 @@ public:
 	// replaced by the first value (since @@z occurs first in it) and both @@4
 	// tokens are replaced by the second value (since @@4 occurs second).
 	// NB! The number of different '@@n' tokens MUST match the number of values!
-    static String filloutQuery( const String querystr, StringList values);
+    static String filloutQuery( const String querystr, StringList &values);
     static String filloutQuery( const String querystr, ...);
 
 protected:
