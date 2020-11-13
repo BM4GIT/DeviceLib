@@ -1198,6 +1198,158 @@ String CHECKSTYLE =
     String( "padding-left: 5px; padding-right: 5px; padding-top: 0; padding-bottom: 0; ") +
     String( "}");
 
+// system
+// ------
+
+int stickyArea( uint16_t x, uint16_t y)
+{
+    int sticky = -1;
+    uint16_t dx, dy, da;
+    for ( int i = 0; i < STAR.size(); i++ ) {
+        StickyArea* s = STAR.at( i);
+
+        if ( x < s->left ) dx = s->left - x;
+        else
+        if ( x > s->right ) dx = x - s->right;
+        else
+            dx = 0;
+
+        if ( y < s->top ) dy = s->top - y;
+        else
+        if ( y > s->bottom ) dy = y - s->bottom;
+        else
+            dy = 0;
+
+        if ( (dx + dy) / 2 < da ) {
+            da = (dx + dy) / 2;
+            sticky = i;
+        }
+    }
+    return sticky;
+}
+
+void findWidget( uint16_t x, uint16_t y)
+{
+    CURSOR.removeAll();
+    GList *children = gtk_container_get_children( GTK_CONTAINER( BODY));
+    GList *child;
+    GtkAllocation rect;
+    for ( child = children; child != NULL; child = child->next) {
+        GtkWidget *widget = (GtkWidget*) child->data;
+        gtk_widget_get_allocation( widget, &rect);
+        if ( x > rect.x && x < (rect.x + rect.width) &&
+             y > rect.y && y < (rect.y + rect.height) )
+            CURSOR.add( widget);
+    }
+}
+
+gboolean onIdle( gpointer data)
+{
+    loop();
+    return g_running;
+}
+
+gboolean onWindowClose( GtkWidget *widget, GdkEvent *event, gpointer data)
+{
+    g_running = false;
+    return false;
+}
+
+gboolean onMouseMove( GtkWidget *widget, GdkEventMotion *event)
+{
+    if ( canDrag && DRAG ) {
+        uint16_t x = event->x - widgetXoffs;
+        uint16_t y = event->y - widgetYoffs;
+        if ( fieldR || fieldB ) {
+            if ( x < fieldL ) x = fieldL;
+            if ( y < fieldT ) y = fieldT;
+            if ( x > fieldR - dragW ) x = fieldR - dragW;
+            if ( y > fieldB - dragH ) y = fieldB - dragH;
+        }
+
+        int ix = stickyArea( x, y);
+        if ( ix >= 0 ) {
+            x = STAR.at( ix)->left;
+            y = STAR.at( ix)->top;
+        }
+
+        gtk_fixed_move( (GtkFixed*) BODY, DRAG, x, y);
+    }
+    return true;
+}
+
+gboolean onMouseClick( GtkWidget *widget, GdkEventButton *event)
+{
+    mouseXpos = event->x;
+    mouseYpos = event->y;
+    if ( gtk_widget_get_window( BODY) == event->window )
+        findWidget( mouseXpos, mouseYpos);
+    else {
+        CURSOR.removeAll();
+        CURSOR.add( widget);
+    }
+
+    switch ( event->button ) {
+        case 1 :    if ( mouseLClick ) mouseLClick();
+                    canDrag = true;
+                    break;
+        case 3 :    if ( mouseRClick ) mouseRClick();
+                    break;
+    }
+    return true;
+}
+
+gboolean onMouseRelease( GtkWidget *widget, GdkEventButton *event)
+{
+    mouseXpos = event->x;
+    mouseYpos = event->y;
+    if ( gtk_widget_get_window( BODY) == event->window )
+        findWidget( mouseXpos, mouseYpos);
+    else {
+        CURSOR.removeAll();
+        CURSOR.add( widget);
+    }
+    switch ( event->button ) {
+        case 1 :    if ( mouseLRelease ) mouseLRelease();
+                    canDrag = false;
+                    break;
+        case 3 :    if ( mouseRRelease ) mouseRRelease();
+                    break;
+    }
+    return true;
+}
+
+void activate( GtkApplication *app, gpointer user_data)
+{
+    WINDOW = gtk_application_window_new( app);
+    gtk_window_set_title( GTK_WINDOW( WINDOW), "GTK-APP");
+    gtk_window_set_default_size( GTK_WINDOW( WINDOW), 250, 0);
+    gtk_window_set_position( GTK_WINDOW( WINDOW), GTK_WIN_POS_CENTER);
+    g_signal_connect( G_OBJECT( WINDOW), "delete-event", G_CALLBACK( onWindowClose), NULL);
+
+    g_idle_add( onIdle, WINDOW);
+
+    g_signal_connect( WINDOW, "motion_notify_event", G_CALLBACK( onMouseMove), NULL);
+    gtk_widget_set_events( WINDOW, GDK_POINTER_MOTION_MASK);
+
+    g_signal_connect( WINDOW, "button_press_event", G_CALLBACK( onMouseClick), NULL);
+    gtk_widget_set_events( WINDOW, GDK_BUTTON_PRESS_MASK);
+
+    g_signal_connect( WINDOW, "button_release_event", G_CALLBACK( onMouseRelease), NULL);
+    gtk_widget_set_events( WINDOW, GDK_BUTTON_RELEASE_MASK);
+
+    BODY = gtk_fixed_new();
+    gtk_container_add( GTK_CONTAINER( WINDOW), BODY);
+    gtk_widget_set_name( BODY, "BODY");
+
+    g_print( "Starting 'setup'\n\n");
+    setup();
+
+    gtk_widget_show_all( WINDOW);
+
+    g_print( "Starting 'loop'\n\n");
+}
+
 // interface
 // ---------
 
@@ -1247,6 +1399,10 @@ void* create( uint8_t type, String name, String param)
                         break;
         case tButton:	item = gtk_button_new_with_label( param.c_str()); // button text
                         applyStyle( item, BUTTONSTYLE);
+			g_signal_connect( item, "button_press_event", G_CALLBACK( onMouseClick), NULL);
+			gtk_widget_set_events( item, GDK_BUTTON_PRESS_MASK);
+			g_signal_connect( item, "button_release_event", G_CALLBACK( onMouseRelease), NULL);
+			gtk_widget_set_events( item, GDK_BUTTON_RELEASE_MASK);
                         break;
         case tCheck:	item = gtk_check_button_new_with_label( param.c_str()); // button tekst
                         applyStyle( item, CHECKSTYLE);
@@ -1472,155 +1628,6 @@ void getRowValues( uint8_t row, StringList& values, uint8_t type)
 	for ( int i = 0; i < r->size(); i++ )
 	    values.add( text( r->at( i), type));
     }
-}
-
-// system
-// ------
-
-int stickyArea( uint16_t x, uint16_t y)
-{
-    int sticky = -1;
-    uint16_t dx, dy, da;
-    for ( int i = 0; i < STAR.size(); i++ ) {
-        StickyArea* s = STAR.at( i);
-
-        if ( x < s->left ) dx = s->left - x;
-        else
-        if ( x > s->right ) dx = x - s->right;
-        else
-            dx = 0;
-
-        if ( y < s->top ) dy = s->top - y;
-        else
-        if ( y > s->bottom ) dy = y - s->bottom;
-        else
-            dy = 0;
-
-        if ( (dx + dy) / 2 < da ) {
-            da = (dx + dy) / 2;
-            sticky = i;
-        }
-    }
-    return sticky;
-}
-
-void findWidget( uint16_t x, uint16_t y)
-{
-    CURSOR.removeAll();
-    GList *children = gtk_container_get_children( GTK_CONTAINER( BODY));
-    GList *child;
-    GtkAllocation rect;
-    for ( child = children; child != NULL; child = child->next) {
-        GtkWidget *widget = (GtkWidget*) child->data;
-        gtk_widget_get_allocation( widget, &rect);
-        if ( x > rect.x && x < (rect.x + rect.width) &&
-             y > rect.y && y < (rect.y + rect.height) )
-            CURSOR.add( widget);
-    }
-}
-
-gboolean onIdle( gpointer data)
-{
-    loop();
-    return g_running;
-}
-
-gboolean onWindowClose( GtkWidget *widget, GdkEvent *event, gpointer data)
-{
-    g_running = false;
-    return false;
-}
-
-gboolean onMouseMove( GtkWidget *widget, GdkEventMotion *event)
-{
-    if ( canDrag && DRAG ) {
-        uint16_t x = event->x - widgetXoffs;
-        uint16_t y = event->y - widgetYoffs;
-        if ( fieldR || fieldB ) {
-            if ( x < fieldL ) x = fieldL;
-            if ( y < fieldT ) y = fieldT;
-            if ( x > fieldR - dragW ) x = fieldR - dragW;
-            if ( y > fieldB - dragH ) y = fieldB - dragH;
-        }
-
-        int ix = stickyArea( x, y);
-        if ( ix >= 0 ) {
-            x = STAR.at( ix)->left;
-            y = STAR.at( ix)->top;
-        }
-
-        gtk_fixed_move( (GtkFixed*) BODY, DRAG, x, y);
-    }
-    return true;
-}
-
-gboolean onMouseClick( GtkWidget *widget, GdkEventButton *event)
-{
-    if ( gtk_widget_get_window( BODY) != event->window ) {
-        CURSOR.removeAll();
-        return TRUE;
-    }
-    mouseXpos = event->x;
-    mouseYpos = event->y;
-    findWidget( mouseXpos, mouseYpos);
-    switch ( event->button ) {
-        case 1 :    if ( mouseLClick ) mouseLClick();
-                    canDrag = true;
-                    break;
-        case 3 :    if ( mouseRClick ) mouseRClick();
-                    break;
-    }
-    return true;
-}
-
-gboolean onMouseRelease( GtkWidget *widget, GdkEventButton *event)
-{
-    if ( gtk_widget_get_window( BODY) != event->window ) {
-        CURSOR.removeAll();
-        return TRUE;
-    }
-    mouseXpos = event->x;
-    mouseYpos = event->y;
-    findWidget( mouseXpos, mouseYpos);
-    switch ( event->button ) {
-        case 1 :    if ( mouseLRelease ) mouseLRelease();
-                    canDrag = false;
-                    break;
-        case 3 :    if ( mouseRRelease ) mouseRRelease();
-                    break;
-    }
-    return true;
-}
-
-void activate( GtkApplication *app, gpointer user_data)
-{
-    WINDOW = gtk_application_window_new( app);
-    gtk_window_set_title( GTK_WINDOW( WINDOW), "GTK-APP");
-    gtk_window_set_default_size( GTK_WINDOW( WINDOW), 250, 0);
-    gtk_window_set_position( GTK_WINDOW( WINDOW), GTK_WIN_POS_CENTER);
-    g_signal_connect( G_OBJECT( WINDOW), "delete-event", G_CALLBACK( onWindowClose), NULL);
-
-    g_idle_add( onIdle, WINDOW);
-
-    g_signal_connect( WINDOW, "motion_notify_event", G_CALLBACK( onMouseMove), NULL);
-    gtk_widget_set_events( WINDOW, GDK_POINTER_MOTION_MASK);
-
-    g_signal_connect( WINDOW, "button_press_event", G_CALLBACK( onMouseClick), NULL);
-    gtk_widget_set_events( WINDOW, GDK_BUTTON_PRESS_MASK);
-
-    g_signal_connect( WINDOW, "button_release_event", G_CALLBACK( onMouseRelease), NULL);
-    gtk_widget_set_events( WINDOW, GDK_BUTTON_RELEASE_MASK);
-
-    BODY = gtk_fixed_new();
-    gtk_container_add( GTK_CONTAINER( WINDOW), BODY);
-    gtk_widget_set_name( BODY, "BODY");
-
-    g_print( "Starting 'setup'\n\n");
-    setup();
-
-    gtk_widget_show_all( WINDOW);
-
-    g_print( "Starting 'loop'\n\n");
 }
 #endif
 
