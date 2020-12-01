@@ -9,14 +9,20 @@
 #ifndef TCPCLIENT_H
 #define TCPCLIENT_H
 
+#ifdef RPI
 #include "ArduinoCore.h"
 #include "ArduinoString.h"
+#else
+#include <Arduino.h>
+#endif
 
 class TcpClient
 {
 public:
 
 	TcpClient();
+
+  bool wifi( String ssid, String password);
 
 	bool connect( String host, uint16_t port, String id);
 	bool connected();
@@ -25,11 +31,11 @@ public:
 	bool read( String& data);
 	bool send( String data);
 
-    String error();
+  String error();
 
 protected:
 
-    String  m_error;
+  String  m_error;
 	int		m_socket;
 	bool	m_end;
 };

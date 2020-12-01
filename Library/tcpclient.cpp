@@ -7,19 +7,51 @@
 // Disclaimer: DeviceLib is distributed without any warranty.
 
 #include "tcpclient.h"
+
+#ifdef RPI
 namespace sckt {
 #include <unistd.h>
 #include <netdb.h>
 #include <sys/ioctl.h>
 }
+#else
+#include <WiFi.h>
+WiFiClient client;
+#endif
 
 TcpClient::TcpClient()
 {
 	m_socket = -1;
 }
 
+#ifdef RPI
+bool TcpClient::wifi( String ssid, String password)
+{
+    // dummy routine to be exchangable with the arduino code
+    // on the arduino wifi is started in the program, but
+    // on the raspberry wifi is started in the operating system
+    return true;
+}
+#else
+bool TcpClient::wifi( String ssid, String password)
+{
+    WiFi.begin( ssid.c_str(), password.c_str());
+    int i = 0;
+    while ( WiFi.status() != WL_CONNECTED ) {
+        delay( 1000);
+        if ( i > 5 ) break;
+        i++;
+    }
+    if ( i > 5 ) {
+        m_error = "Failed to connect to network.\n";
+		return false;
+    }
+}
+#endif
+
 bool TcpClient::connect( String host, uint16_t port, String id)
 {
+#ifdef RPI
     struct sckt::sockaddr_in serv_addr;
     struct sckt::hostent *server;
     char buffer[256];
@@ -84,10 +116,38 @@ bool TcpClient::connect( String host, uint16_t port, String id)
     }
 
 	return true;
+#else
+    if ( client.connect( host.c_str(), port) )
+    {
+        // send client id
+        client.print( id);
+ 
+        // wait for acknowledgement
+        m_end = false;
+        String data;
+        while ( !m_end ) {
+            read( data);
+            if ( data == "#START#" )
+                break;
+        }
+        if ( m_end ) {
+            client.stop();
+            m_error = "Did not receive an acknowledgement from the server\n.";
+            return false;
+        }
+   }
+    else {
+        m_error = "Failed to connect to host.\n";
+		return false;
+    }
+
+    return true;
+#endif
 }
 
 bool TcpClient::close()
 {
+#ifdef RPI
     if ( m_socket < 0 ) {
         m_error = "Not connected to a server.\n";
         return false;
@@ -100,15 +160,30 @@ bool TcpClient::close()
     }
 	sckt::close( m_socket);
     return true;
+#else
+    if ( !client.connected() ) {
+        m_error = "Not connected to a server.\n";
+        return false;
+    }
+    client.print( "#END#");
+    client.stop();
+    return true;
+#endif
 }
 
 bool TcpClient::connected()
 {
+#ifdef RPI
 	return (m_socket >= 0);
+#else
+    return client.connected();
+#endif
 }
 
 bool TcpClient::read( String& data)
 {
+    data = "";
+#ifdef RPI
     if ( m_socket < 0 ) {
         m_error = "Not connected to a server.\n";
         return false;
@@ -128,10 +203,16 @@ bool TcpClient::read( String& data)
     else
         data = buffer;
     return true;
+#else
+    while ( client.available() )
+        data += char( client.read());
+    return true;
+#endif
 }
 
 bool TcpClient::send( String data)
 {
+#ifdef RPI
     if ( m_socket < 0 ) {
         m_error = "Not connected to a server.\n";
         return false;
@@ -142,6 +223,14 @@ bool TcpClient::send( String data)
         m_error = "Failed to send data.\n";
 	}
 	return (n >= 0);
+#else
+    if ( !client.connected() ) {
+        m_error = "Not connected to a server.\n";
+        return false;
+    }
+    client.print( data);
+    return true;
+#endif
 }
 
 String TcpClient::error()
