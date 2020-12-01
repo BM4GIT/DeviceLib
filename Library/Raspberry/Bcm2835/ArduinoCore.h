@@ -1,26 +1,25 @@
-// ArduinoCore.h
+// file:    ArduinoCore.cpp
+// Copyright 2020 D.E.Repolev
+//
+// This file is part of DeviceLib. DeviceLib is free software and you may distribute it under
+// the terms of the GNU General Public License (version 3 or later) as published by the
+// Free Software Foundation. The full license text you find at 'https://www.gnu.org/licenses'.
+// Disclaimer: DeviceLib is distributed without any warranty.
 
 /*
+*  The following copyright notes only concern:
+*  > Serial interface
+*  > attachInterrupt / detachInterrupt
+*  > analogRead / analogWrite
+*  > the pwm and threading helper-routines
+* 
 *  Copyright (C) 2012 Libelium Comunicaciones Distribuidas S.L.
 *  http://www.libelium.com
-*
-*  This program is free software: you can redistribute it and/or modify
-*  it under the terms of the GNU General Public License as published by
-*  the Free Software Foundation, either version 3 of the License, or
-*  (at your option) any later version.
 *
 *  Version 2.4 (For Raspberry Pi 2)
 *  Author: Sergio Martinez, Ruben Martin
 *
-*  Version DeviceLib, 2020 (For DeviceLib library on Raspberry)
-*  The complete library has been split up to mirror the arduino configuration.
-*  These are the components in the DeviceLib library:
-*  > BcmCore		- all helper stuff
-*  > ArduinoCore	- global routines like pinMode, digitalWrite, etc. and the Serial interface
-*  > Wire			- the I2C interface
-*  > SPI			- the SPI interface
-*  Some minor changes have been made to meet the structure of the DeviceLib library.
-*
+*  2020: Some minor changes have been made to meet the structure of the DeviceLib library.
 */
 
 #ifndef ARDUINOCORE_H
@@ -30,6 +29,8 @@
 #include <chrono>
 #include "BcmCore.h"
 #include "linkedlist.h"
+
+extern bool GTK;
 
 using namespace std;
 
@@ -65,11 +66,7 @@ extern long micros();
 extern void pinMode( int pin, int mode);
 #define digitalWrite( pin, state)	bcm2835_gpio_write( pin, state)
 #define digitalRead( pin)			bcm2835_gpio_lev( pin)
-#ifdef GTK // GTK and pwm do not go together
-#define analogWrite( pin, state)	bcm2835_gpio_write( pin, state)
-#else
 extern void analogWrite( int pin, int level);
-#endif
 extern int analogRead (int pin);
 
 extern void attachInterrupt(int p,void (*f)(), uint m);
@@ -193,8 +190,9 @@ extern void localTime( tm &lt, uint32_t &msec);
 extern ulong diffMillis( hirestime stop, hirestime start);
 extern ulong diffMicros( hirestime stop, hirestime start);
 
-
-#ifdef GTK
+/////////
+// GTK //
+/////////
 
 #define tLabel	1
 #define tImage	2
@@ -242,7 +240,5 @@ void clearStickyArea();
 void addRow( WidgetList* widgets);
 void setRowValues( uint8_t row, StringList &values, uint8_t type = tEdit);
 void getRowValues( uint8_t row, StringList& values, uint8_t type = tEdit);
-
-#endif
 
 #endif // ARDUINOCORE_H

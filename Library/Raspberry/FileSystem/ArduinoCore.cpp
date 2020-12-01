@@ -16,11 +16,6 @@
 *  Copyright (C) 2012 Libelium Comunicaciones Distribuidas S.L.
 *  http://www.libelium.com
 *
-*  This program is free software: you can redistribute it and/or modify
-*  it under the terms of the GNU General Public License as published by
-*  the Free Software Foundation, either version 3 of the License, or
-*  (at your option) any later version.
-*
 *  Version 2.4 (For Raspberry Pi 2)
 *  Author: Sergio Martinez, Ruben Martin
 *
@@ -71,7 +66,6 @@ ulong diffMicros( hirestime stop, hirestime start)
     return chrono::duration_cast<chrono::microseconds>( stop - start).count();
 }
 
-#ifndef GTK
 struct pwmgoStruct {
 	void (*pwmworker)();
 	thread pwmthread;
@@ -143,7 +137,6 @@ void pwm4loop()
     }
     printf( "Stopped 'pwm4loop'.\n");
 }
-#endif
 
 struct bcm2835_peripheral{
     unsigned long addr_p;
@@ -338,9 +331,14 @@ uint8_t digitalRead( uint8_t pin)
   return val;
 }
 
-#ifndef GTK
 void analogWrite( uint8_t pin, uint16_t level)
 {
+    if ( GTK ) {
+	// analogWrite and GTK don't go together
+	digitalWrite( pin, level);
+	return;
+    }
+
     if ( level < 0 ) level = 0;
     if ( level > 1023 ) level = 1023;
     int high = level;
@@ -377,7 +375,6 @@ void analogWrite( uint8_t pin, uint16_t level)
 	    break;
 	}
 }
-#endif
 
 void attachInterrupt( uint8_t p,void (*f)(), uint m){
 	int GPIOPin = p;
@@ -1130,7 +1127,6 @@ extern void loop();	// must be declared in the '<application>.cpp' file
 // GTK //
 /////////
 
-#ifdef GTK
 #include <gtk/gtk.h>
 
 static bool g_running = true;
@@ -1629,7 +1625,6 @@ void getRowValues( uint8_t row, StringList& values, uint8_t type)
 	    values.add( text( r->at( i), type));
     }
 }
-#endif
 
 //////////
 // MAIN //
@@ -1668,9 +1663,18 @@ int main( int argc, char **argv)
 
     g_start = chrono::high_resolution_clock::now();
 
-    printf( "Starting 'setup'\n\n");
-    setup();
-    printf( "Starting 'loop'\n\n");
-    while ( 1 ) loop();
+    if ( GTK ) {
+	GtkApplication *app;
+	app = gtk_application_new( "nl.devicelib", G_APPLICATION_FLAGS_NONE);
+	g_signal_connect( app, "activate", G_CALLBACK( activate), NULL);
+	g_application_run( G_APPLICATION( app), argc, argv);
+	g_object_unref( app);
+    }
+    else {
+	setup();
+	while ( 1 ) loop();
+    }
+
+    return 0;
 }
 #endif

@@ -1,4 +1,4 @@
-// file:   usbcamera.h
+// file:   camera.h
 // Copyright 2020 D.E.Repolev
 //
 // This file is part of DeviceLib. DeviceLib is free software and you may distribute it under
@@ -7,8 +7,8 @@
 // Disclaimer: DeviceLib is distributed without any warranty.
 
 
-#ifndef USBCAMERA_H
-#define USBCAMERA_H
+#ifndef CAMERA_H
+#define CAMERA_H
 
 #ifndef RPI
 #error NOTE: You cannot use 'usbcamera.h' on Arduino
@@ -47,11 +47,11 @@ struct SIZ
     uint16_t    h;
 };
 
-class UsbCamera : public Sensor
+class Camera : public Sensor
 {
 public:
-    UsbCamera();
-    ~UsbCamera();
+    Camera();
+    ~Camera();
 
     // buffercount sets the number of buffers used for the camera stream
     bool init( int width, int height);
@@ -123,4 +123,4 @@ protected:
 
 #endif // RPI
 
-#endif // USBCAMERA_H
+#endif // CAMERA_H

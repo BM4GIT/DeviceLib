@@ -1,25 +1,25 @@
-// ArduinoCore.cpp
+// file:    ArduinoCore.cpp
+// Copyright 2020 D.E.Repolev
+//
+// This file is part of DeviceLib. DeviceLib is free software and you may distribute it under
+// the terms of the GNU General Public License (version 3 or later) as published by the
+// Free Software Foundation. The full license text you find at 'https://www.gnu.org/licenses'.
+// Disclaimer: DeviceLib is distributed without any warranty.
 
 /*
+*  The following copyright notes only concern:
+*  > Serial interface
+*  > attachInterrupt / detachInterrupt
+*  > analogRead / analogWrite
+*  > the pwm and threading helper-routines
+* 
 *  Copyright (C) 2012 Libelium Comunicaciones Distribuidas S.L.
 *  http://www.libelium.com
-*
-*  This program is free software: you can redistribute it and/or modify
-*  it under the terms of the GNU General Public License as published by
-*  the Free Software Foundation, either version 3 of the License, or
-*  (at your option) any later version.
 *
 *  Version 2.4 (For Raspberry Pi 2)
 *  Author: Sergio Martinez, Ruben Martin
 *
-*  Version DeviceLib, 2020 (For DeviceLib library on Raspberry)
-*  The complete library has been split up to mirror the arduino configuration.
-*  These are the components in the DeviceLib library:
-*  > BcmCore		- all helper stuff
-*  > ArduinoCore	- global routines like pinMode, digitalWrite, etc. and the Serial interface
-*  > Wire		- the I2C interface
-*  > SPI		- the SPI interface
-*  Some minor changes have been made to meet the structure of the DeviceLib library.
+*  2020: Some minor changes have been made to meet the structure of the DeviceLib library.
 */
 
 #include <chrono>
@@ -38,7 +38,6 @@ namespace unistd {
 // HELPER FUNCTIONS //
 //////////////////////
 
-#ifndef GTK
 struct pwmgoStruct {
 	void (*pwmworker)();
 	thread pwmthread;
@@ -110,7 +109,6 @@ void pwm4loop()
     }
     printf( "Stopped 'pwm4loop'.\n");
 }
-#endif
 
 pthread_t idThread2;
 pthread_t idThread3;
@@ -218,9 +216,13 @@ void pinMode( int pin, int mode)
     bcm2835_gpio_fsel( pin, fsel);
 }
 
-#ifndef GTK
 void analogWrite( int pin, int level)
 {
+    if ( GTK ) {
+	// analogWrite and GTK don't go together
+	bcm2835_gpio_write( pin, level);
+	return;
+    }
     if ( level < 0 ) level = 0;
     if ( level > 1023 ) level = 1023;
     int high = level;
@@ -257,7 +259,6 @@ void analogWrite( int pin, int level)
 	    break;
 	}
 }
-#endif
 
 int analogRead (int pin){
 
@@ -851,7 +852,6 @@ extern void loop();	// must be declared in the '<application>.cpp' file
 // GTK //
 /////////
 
-#ifdef GTK
 #include <gtk/gtk.h>
 
 static bool g_running = true;
@@ -1063,12 +1063,8 @@ void activate( GtkApplication *app, gpointer user_data)
     gtk_container_add( GTK_CONTAINER( WINDOW), BODY);
     gtk_widget_set_name( BODY, "BODY");
 
-    g_print( "Starting 'setup'\n\n");
     setup();
-
     gtk_widget_show_all( WINDOW);
-
-    g_print( "Starting 'loop'\n\n");
 }
 
 // interface
@@ -1350,36 +1346,11 @@ void getRowValues( uint8_t row, StringList& values, uint8_t type)
 	    values.add( text( r->at( i), type));
     }
 }
-#endif
 
 //////////
 // MAIN //
 //////////
 
-#ifdef GTK
-int main( int argc, char **argv)
-{
-    if ( !bcm2835_init() ) {
-        printf( "Can not initialise bcm2835 library.\nProgram will be aborted.\n");
-        bcm2835_close();
-        return 1;
-    }
-
-    g_start = chrono::high_resolution_clock::now();
-
-    GtkApplication *app;
-    int status;
-
-    app = gtk_application_new( "nl.devicelib", G_APPLICATION_FLAGS_NONE);
-    g_signal_connect( app, "activate", G_CALLBACK( activate), NULL);
-    status = g_application_run( G_APPLICATION( app), argc, argv);
-    g_object_unref( app);
-
-    bcm2835_close();
-
-    return status;
-}
-#else
 int main( int argc, char **argv)
 {
     if ( !bcm2835_init() ) {
@@ -1402,11 +1373,18 @@ int main( int argc, char **argv)
 
     g_start = chrono::high_resolution_clock::now();
 
-    printf( "Starting 'setup'\n\n");
-    setup();
-    printf( "Starting 'loop'\n\n");
-    while ( 1 ) loop();
+    if ( GTK ) {
+	GtkApplication *app;
+	app = gtk_application_new( "nl.devicelib", G_APPLICATION_FLAGS_NONE);
+	g_signal_connect( app, "activate", G_CALLBACK( activate), NULL);
+	g_application_run( G_APPLICATION( app), argc, argv);
+	g_object_unref( app);
+    }
+    else {
+	setup();
+	while ( 1 ) loop();
+    }
 
     bcm2835_close();
+    return 0;
 }
-#endif

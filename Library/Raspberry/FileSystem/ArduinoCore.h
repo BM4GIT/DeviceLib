@@ -1,4 +1,4 @@
-// file:    ArduinoCore.h
+// file:    ArduinoCore.cpp
 // Copyright 2020 D.E.Repolev
 //
 // This file is part of DeviceLib. DeviceLib is free software and you may distribute it under
@@ -6,12 +6,30 @@
 // Free Software Foundation. The full license text you find at 'https://www.gnu.org/licenses'.
 // Disclaimer: DeviceLib is distributed without any warranty.
 
+/*
+*  The following copyright notes only concern:
+*  > Serial interface
+*  > attachInterrupt / detachInterrupt
+*  > analogRead / analogWrite
+*  > the pwm and threading helper-routines
+* 
+*  Copyright (C) 2012 Libelium Comunicaciones Distribuidas S.L.
+*  http://www.libelium.com
+*
+*  Version 2.4 (For Raspberry Pi 2)
+*  Author: Sergio Martinez, Ruben Martin
+*
+*  2020: Some minor changes have been made to meet the structure of the DeviceLib library.
+*/
+
 
 #ifndef ARDUINOCORE_H
 #define ARDUINOCORE_H
 
 #include <chrono>
 #include "linkedlist.h"
+
+extern bool GTK;
 
 using namespace std;
 
@@ -36,11 +54,7 @@ extern long micros();
 extern void pinMode( uint8_t pin, uint8_t mode);
 extern void digitalWrite( uint8_t pin, uint8_t data);
 extern uint8_t digitalRead( uint8_t pin);
-#ifdef GTK // GTK and pwm do not go together
-#define analogWrite digitalWrite
-#else
 extern void analogWrite( uint8_t pin, uint16_t level);
-#endif
 // analogRead not defined yet
 
 extern void attachInterrupt( uint8_t pin, void (*func)(), uint mode);
@@ -192,8 +206,9 @@ private:
     tdGpioPinData pindata[MAXPINS];
 };
 
-
-#ifdef GTK
+/////////
+// GTK //
+/////////
 
 #define tLabel	1
 #define tImage	2
@@ -241,7 +256,5 @@ void clearStickyArea();
 void addRow( WidgetList* widgets);
 void setRowValues( uint8_t row, StringList &values, uint8_t type = tEdit);
 void getRowValues( uint8_t row, StringList& values, uint8_t type = tEdit);
-
-#endif
 
 #endif // ARDUINOCORE_H

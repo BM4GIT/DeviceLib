@@ -13,6 +13,6 @@
 #include "ArduinoString.h"
 #include "ArduinoCore.h"
 
-bool GTK = false;
+bool GTK = true;
 
 #endif // ARDUINO_H

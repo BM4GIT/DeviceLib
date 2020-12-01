@@ -1,4 +1,4 @@
-// file:    Arduino.h
+// file:   tcpclient.h
 // Copyright 2020 D.E.Repolev
 //
 // This file is part of DeviceLib. DeviceLib is free software and you may distribute it under
@@ -6,13 +6,32 @@
 // Free Software Foundation. The full license text you find at 'https://www.gnu.org/licenses'.
 // Disclaimer: DeviceLib is distributed without any warranty.
 
+#ifndef TCPCLIENT_H
+#define TCPCLIENT_H
 
-#ifndef ARDUINO_H
-#define ARDUINO_H
-
-#include "ArduinoString.h"
 #include "ArduinoCore.h"
+#include "ArduinoString.h"
 
-bool GTK = false;
+class TcpClient
+{
+public:
 
-#endif // ARDUINO_H
+	TcpClient();
+
+	bool connect( String host, uint16_t port, String id);
+	bool connected();
+	bool close();
+
+	bool read( String& data);
+	bool send( String data);
+
+    String error();
+
+protected:
+
+    String  m_error;
+	int		m_socket;
+	bool	m_end;
+};
+
+#endif

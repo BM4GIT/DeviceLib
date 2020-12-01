@@ -1,4 +1,4 @@
-// file:   usbcamera.cpp
+// file:   camera.cpp
 // Copyright 2020 D.E.Repolev
 //
 // This file is part of DeviceLib. DeviceLib is free software and you may distribute it under
@@ -9,10 +9,10 @@
 
 #ifdef RPI
 
-#include "usbcamera.h"
+#include "camera.h"
 #include <math.h>
 
-UsbCamera::UsbCamera()
+Camera::Camera()
 {
     m_stream = NULL;
     m_width = 0;
@@ -24,12 +24,12 @@ UsbCamera::UsbCamera()
     m_th = 5;
 }
 
-UsbCamera::~UsbCamera()
+Camera::~Camera()
 {
     stop();
 }
 
-bool UsbCamera::init( int width, int height)
+bool Camera::init( int width, int height)
 {
     m_width = width;
     m_height = height;
@@ -45,40 +45,40 @@ bool UsbCamera::init( int width, int height)
     return true;
 }
 
-bool UsbCamera::start()
+bool Camera::start()
 {
     return m_stream;
 }
 
-void UsbCamera::read()
+void Camera::read()
 {
     m_stream->read( m_img);
     Sensor::read();
 }
 
-void UsbCamera::stop()
+void Camera::stop()
 {
     if ( m_stream )
         delete m_stream;
     m_stream = NULL;
 }
 
-Mat UsbCamera::image()
+Mat Camera::image()
 {
     return m_img;
 }
 
-int UsbCamera:: width()
+int Camera:: width()
 {
     return m_width;
 }
 
-int UsbCamera::height()
+int Camera::height()
 {
     return m_height;
 }
 
-void UsbCamera::setAnalyze( uint8_t threshold, SIZ blocksize)
+void Camera::setAnalyze( uint8_t threshold, SIZ blocksize)
 {
     m_dx = blocksize.w;
     m_dy = blocksize.h;
@@ -92,13 +92,13 @@ void UsbCamera::setAnalyze( uint8_t threshold, SIZ blocksize)
         }
 }
 
-void UsbCamera::setReferenceColor( CLR color, bool background)
+void Camera::setReferenceColor( CLR color, bool background)
 {
     m_ref = color;
     m_bgc = background;
 }
 
-bool UsbCamera::scanColor( Mat& img, CLR& clr)
+bool Camera::scanColor( Mat& img, CLR& clr)
 {
     long cnt = img.cols * img.rows;
     if ( cnt > 0 ) {
@@ -118,7 +118,7 @@ bool UsbCamera::scanColor( Mat& img, CLR& clr)
     return (cnt > 0);
 }
 
-bool UsbCamera::colorChanged( CLR oldclr, CLR newclr)
+bool Camera::colorChanged( CLR oldclr, CLR newclr)
 {
     // split colors in rgb components
     int ord = oldclr.r;
@@ -148,7 +148,7 @@ bool UsbCamera::colorChanged( CLR oldclr, CLR newclr)
     return !(drd & dgr & dbl);
 }
 
-bool UsbCamera::colorEqual( CLR refclr, CLR newclr)
+bool Camera::colorEqual( CLR refclr, CLR newclr)
 {
     bool drd = (abs(refclr.r - newclr.r) * 100 / 255) < m_th;
     bool dgr = (abs(refclr.g - newclr.g) * 100 / 255) < m_th;
@@ -159,7 +159,7 @@ bool UsbCamera::colorEqual( CLR refclr, CLR newclr)
 }
 
 /*
-bool UsbCamera::intensityEqual( QColor refclr, QColor newclr)
+bool Camera::intensityEqual( QColor refclr, QColor newclr)
 {
     int rh, rs, rl, nh, ns, nl;
     refclr.getHsl( &rh, &rs, &rl);
@@ -170,7 +170,7 @@ bool UsbCamera::intensityEqual( QColor refclr, QColor newclr)
 }
 */
 
-int UsbCamera::percentageChanged( int alterationtype)
+int Camera::percentageChanged( int alterationtype)
 {
     if ( m_busy ) return -1;
     m_busy = true;
@@ -216,7 +216,7 @@ int UsbCamera::percentageChanged( int alterationtype)
 }
 
 /*
-int UsbCamera::spotCount( uint8_t minimalsize)
+int Camera::spotCount( uint8_t minimalsize)
 {
     if ( m_busy ) return -1;
     m_busy = true;
@@ -252,7 +252,7 @@ int UsbCamera::spotCount( uint8_t minimalsize)
     return cnt;
 }
 
-void UsbCamera::gatherSpot( int x, int y)
+void Camera::gatherSpot( int x, int y)
 {
     if ( x < 0 || x >= m_width ) return;
     if ( y < 0 || y >= m_height ) return;
