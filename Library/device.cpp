@@ -14,6 +14,8 @@
 ///////////////////////////////////
 
 TimerEvents     g_te;
+bool            g_ask_block = false;
+bool            g_grant_block = false;
 bool            g_tb = false;
 uint32_t        g_tm = 0;
 #ifdef RPI
@@ -24,6 +26,11 @@ void threadWorker()
 {
 #ifdef RPI
     while ( g_tb ) {
+        if ( g_ask_block ) {
+            g_grant_block = true;
+            while ( g_ask_block );
+            g_grant_block = false;
+        }
         auto ct = chrono::high_resolution_clock::now();
         for ( int i = 0; i < g_te.size(); i++ ) {
             TimerEvent *te = g_te.at( i);
@@ -69,10 +76,16 @@ TimerEvent* TimerThread::startEvent( uint32_t msec, void (*event)())
     te->dtime = msec;
 #ifdef RPI
     te->ftime = chrono::high_resolution_clock::now();
+    if ( g_te.size() ) { // thread is running
+        g_ask_block = true;
+        while  ( !g_grant_block ) ;
+    }
+    g_te.add( te);
+    g_ask_block = false;
 #else
     te->ftime = 0;
-#endif
     g_te.add( te);
+#endif
 
     // start timer thread if not running yet
     if ( g_te.size() == 1 ) {
@@ -91,6 +104,14 @@ TimerEvent* TimerThread::startEvent( uint32_t msec, void (*event)())
 
 void TimerThread::stopEvent( TimerEvent *te)
 {
+    if ( !g_te.size() ) return; // timer thread not running
+
+#ifdef RPI
+    // block timer thread
+    g_ask_block = true;
+    while ( !g_grant_block ) ;
+#endif
+
     // remove event from the timer event handling
     for ( int i = 0; i < g_te.size(); i++ )
         if ( g_te.at( i) == te ) {
@@ -98,6 +119,11 @@ void TimerThread::stopEvent( TimerEvent *te)
             break;
         }
     delete te;
+
+#ifdef RPI
+    // let timer thread continue
+    g_ask_block = false;
+#endif
 
     // stop timer thread if no more timer events
     if ( !g_te.size() ) {

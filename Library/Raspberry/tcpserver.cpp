@@ -214,19 +214,27 @@ void* clientThread( void* socket)
                 continue;
             }
 
-            // add client to the list
-            client_t *cli;
-            try {
-            cli = new client_t;
-            }
-            catch ( bad_alloc* e ) {
-            sckt::close( lclient);
-            error( "Routine: clientThread.\nFailed to allocate memory for new client.\n");
-            continue;
-            }
-            cli->id = sclient;
-            cli->fd = lclient;
-            g_clients.add( cli);
+	    // if client reconnects, first delete old connection
+	    int i;
+	    for ( i = 0; i < g_clients.size(); i++ )
+		if ( g_clients.at( i)->id == sclient ) {
+		    deleteClient( sclient);
+		    break;
+		}
+
+	    // add client to the list
+	    client_t *cli;
+	    try {
+	    cli = new client_t;
+	    }
+	    catch ( bad_alloc* e ) {
+	    sckt::close( lclient);
+	    error( "Routine: clientThread.\nFailed to allocate memory for new client.\n");
+	    continue;
+	    }
+	    cli->id = sclient;
+	    cli->fd = lclient;
+	    g_clients.add( cli);
 
             // send acknowledge
             if ( !sendToClient( lclient, START) )
