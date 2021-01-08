@@ -19,8 +19,8 @@
 #ifndef _TIMERTWO_H_
 #define _TIMERTWO_H_
 
-#ifdef RPI
-#error NOTE: You cannot use 'TimerTwo.h' on Raspberry
+#ifndef __AVR__
+#error NOTE: You cannot use 'TimerTwo.h' on non AVR achitecture
 #else
 
 

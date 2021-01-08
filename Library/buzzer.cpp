@@ -16,7 +16,7 @@ Buzzer::Buzzer()
 
 Buzzer::~Buzzer()
 {
-    setOff();
+    off();
 }
 
 void Buzzer::setPin( uint8_t pin)
@@ -25,16 +25,16 @@ void Buzzer::setPin( uint8_t pin)
     pinMode( pin, OUTPUT);
 }
 
-void Buzzer::setOn()
+void Buzzer::on()
 {
     if ( m_pin < 0 ) return;
-    Actuator::setOn();
+    Actuator::on();
     digitalWrite( m_pin, HIGH);
 }
 
-void Buzzer::setOff()
+void Buzzer::off()
 {
     if ( m_pin < 0 ) return;
-    Actuator::setOff();
+    Actuator::off();
     digitalWrite( m_pin, LOW);
 }

@@ -1,4 +1,4 @@
-// file:   actuator.cpp
+// file:   average.h
 // Copyright 2020 D.E.Repolev
 //
 // This file is part of DeviceLib. DeviceLib is free software and you may distribute it under
@@ -6,29 +6,22 @@
 // Free Software Foundation. The full license text you find at 'https://www.gnu.org/licenses'.
 // Disclaimer: DeviceLib is distributed without any warranty.
 
+#ifndef AVERAGE_H
+#define AVERAGE_H
 
-#include "actuator.h"
-
-Actuator::Actuator()
+class Average
 {
-    m_ison = false;
-}
+public:
+    Average();
 
-Actuator::~Actuator()
-{
-}
+    void  add( float value);
+    void  clear();
+    float avg();
 
-void Actuator::on()
-{
-    m_ison = true;
-}
+protected:
+    float  m_val[20];
+    int    m_cur;
+    bool   m_complete;
+};
 
-void Actuator::off()
-{
-    m_ison = false;
-}
-
-bool Actuator::isOn()
-{
-    return m_ison;
-}
+#endif // AVERAGE_H

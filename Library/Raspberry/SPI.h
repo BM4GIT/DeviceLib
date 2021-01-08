@@ -50,7 +50,7 @@ class SPISettings
 {
 public:
     SPISettings();
-    SPISettings( uint8_t speed, uint8_t lsb_msb, uint8_t spimode);
+    SPISettings( uint32_t speed, uint8_t lsb_msb, uint8_t spimode);
 
     uint8_t     m_mode;
     uint8_t     m_first;

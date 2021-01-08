@@ -16,7 +16,7 @@ Beeper::Beeper()
 
 Beeper::~Beeper()
 {
-    setOff();
+    off();
 }
 
 void Beeper::setPin( uint8_t pin)
@@ -34,9 +34,9 @@ void Beeper::setBeeper( float herz, uint16_t msec)
 void Beeper::beep()
 {
     if ( m_pin < 0 ) return;
-    Actuator::setOn();
+    Actuator::on();
     playtone( m_beep, m_dur);
-    Actuator::setOff();
+    Actuator::off();
 }
 
 uint8_t Beeper::addTone( float herz, uint16_t msec)
@@ -69,25 +69,25 @@ void Beeper::clear()
 void Beeper::play()
 {
     if ( m_pin < 0 ) return;
-    Actuator::setOn();
+    Actuator::on();
     for (int i = 0; i < m_hz.size(); i++ ) {
         playtone( m_hz[i], m_tm[i]);
         if ( !Actuator::isOn() ) break;
     }
-    Actuator::setOff();
+    Actuator::off();
 }
 
-void Beeper::setOn()
+void Beeper::on()
 {
     if ( m_pin < 0 ) return;
-    Actuator::setOn();
-    playtone( m_beep, 0); // play continuously until setOff
+    Actuator::on();
+    playtone( m_beep, 0); // play continuously until off
 }
 
-void Beeper::setOff()
+void Beeper::off()
 {
     if ( m_pin < 0 ) return;
-    Actuator::setOff();
+    Actuator::off();
 }
 
 void Beeper::playtone( float herz, uint16_t msec)

@@ -22,185 +22,27 @@
 *  2020: Some minor changes have been made to meet the structure of the DeviceLib library.
 */
 
-#include <chrono>
+
+bool GTK = false;
+
+
+#include <thread>
 #include <termio.h>
-#include <poll.h>
+#include <fcntl.h>
 #include "ArduinoCore.h"
-#include "Wire.h"
-#include "linkedlist.h"
+#include <sys/mman.h>
+#include <poll.h>
 
 namespace unistd {
-	//All functions of unistd.h must be called like this: unistd::the_function()
+    //All functions of unistd.h must be called like this: unistd::the_function()
     #include <unistd.h>
 };
-
-//////////////////////
-// HELPER FUNCTIONS //
-//////////////////////
-
-struct pwmgoStruct {
-	void (*pwmworker)();
-	thread pwmthread;
-	int  pin;
-	int  high;
-	int  low;
-	bool go;
-};
-
-#define pwmgoMax 5 // number of pwmXLoop routines
-pwmgoStruct pwmgo[pwmgoMax];
-
-void pwm0loop()
-{
-    printf( "Started 'pwm0loop'.\n");
-    while ( pwmgo[0].go ) {
-	digitalWrite( pwmgo[0].pin, HIGH);
-	delayMicroseconds( pwmgo[0].high);
-	digitalWrite( pwmgo[0].pin, LOW);
-	delayMicroseconds( pwmgo[0].low);
-    }
-    printf( "Stopped 'pwm0loop'.\n");
-}
-
-void pwm1loop()
-{
-    printf( "Started 'pwm1loop'.\n");
-    while ( pwmgo[1].go ) {
-	digitalWrite( pwmgo[1].pin, HIGH);
-	delayMicroseconds( pwmgo[1].high);
-	digitalWrite( pwmgo[1].pin, LOW);
-	delayMicroseconds( pwmgo[1].low);
-    }
-    printf( "Stopped 'pwm1loop'.\n");
-}
-
-void pwm2loop()
-{
-    printf( "Started 'pwm2loop'.\n");
-    while ( pwmgo[2].go ) {
-	digitalWrite( pwmgo[2].pin, HIGH);
-	delayMicroseconds( pwmgo[2].high);
-	digitalWrite( pwmgo[2].pin, LOW);
-	delayMicroseconds( pwmgo[2].low);
-    }
-    printf( "Stopped 'pwm2loop'.\n");
-}
-
-void pwm3loop()
-{
-    printf( "Started 'pwm3loop'.\n");
-    while ( pwmgo[3].go ) {
-	digitalWrite( pwmgo[3].pin, HIGH);
-	delayMicroseconds( pwmgo[3].high);
-	digitalWrite( pwmgo[3].pin, LOW);
-	delayMicroseconds( pwmgo[3].low);
-    }
-    printf( "Stopped 'pwm3loop'.\n");
-}
-
-void pwm4loop()
-{
-    printf( "Started 'pwm4loop'.\n");
-    while ( pwmgo[4].go ) {
-	digitalWrite( pwmgo[4].pin, HIGH);
-	delayMicroseconds( pwmgo[4].high);
-	digitalWrite( pwmgo[4].pin, LOW);
-	delayMicroseconds( pwmgo[4].low);
-    }
-    printf( "Stopped 'pwm4loop'.\n");
-}
-
-pthread_t idThread2;
-pthread_t idThread3;
-pthread_t idThread4;
-pthread_t idThread5;
-pthread_t idThread6;
-pthread_t idThread7;
-pthread_t idThread8;
-pthread_t idThread9;
-pthread_t idThread10;
-pthread_t idThread11;
-pthread_t idThread12;
-pthread_t idThread13;
-
-/* This is the function that will be running in a thread if
- * attachInterrupt() is called */
-void * threadFunction(void *args){
-	ThreadArg *arguments = (ThreadArg *)args;
-	int pin = arguments->pin;
-
-	int GPIO_FN_MAXLEN = 32;
-	int RDBUF_LEN = 5;
-
-	char fn[GPIO_FN_MAXLEN];
-	int fd,ret;
-	struct pollfd pfd;
-	char rdbuf [RDBUF_LEN];
-
-	memset(rdbuf, 0x00, RDBUF_LEN);
-	memset(fn,0x00,GPIO_FN_MAXLEN);
-
-	snprintf(fn, GPIO_FN_MAXLEN-1, "/sys/class/gpio/gpio%d/value",pin);
-	fd=open(fn, O_RDONLY);
-	if(fd<0){
-		perror(fn);
-		exit(1);
-	}
-	pfd.fd=fd;
-	pfd.events=POLLPRI;
-
-	ret=unistd::read(fd,rdbuf,RDBUF_LEN-1);
-	if(ret<0){
-		perror("Error reading interrupt file\n");
-		exit(1);
-	}
-
-	while(1){
-		memset(rdbuf, 0x00, RDBUF_LEN);
-		unistd::lseek(fd, 0, SEEK_SET);
-		ret=poll(&pfd, 1, -1);
-		if(ret<0){
-			perror("Error waiting for interrupt\n");
-			unistd::close(fd);
-			exit(1);
-		}
-		if(ret==0){
-			printf("Timeout\n");
-			continue;
-		}
-		ret=unistd::read(fd,rdbuf,RDBUF_LEN-1);
-		if(ret<0){
-			perror("Error reading interrupt file\n");
-			exit(1);
-		}
-		//Interrupt. We call user function.
-		arguments->func();
-	}
-}
-
-pthread_t *getThreadIdFromPin(int pin){
-	switch(pin){
-		case 2: return &idThread2; break;
-		case 3: return &idThread3; break;
-		case 4: return &idThread4; break;
-		case 5: return &idThread5; break;
-		case 6: return &idThread6; break;
-		case 7: return &idThread7; break;
-		case 8: return &idThread8; break;
-		case 9: return &idThread9; break;
-		case 10: return &idThread10; break;
-		case 11: return &idThread11; break;
-		case 12: return &idThread12; break;
-		case 13: return &idThread13; break;
-	}
-    return 0; // should never come here
-}
 
 //////////////////
 // ARDUINO CORE //
 //////////////////
 
-void pinMode( int pin, int mode)
+void pinMode( uint8_t pin, uint8_t mode)
 {
     int fsel;
     switch ( mode ) {
@@ -216,164 +58,15 @@ void pinMode( int pin, int mode)
     bcm2835_gpio_fsel( pin, fsel);
 }
 
-void analogWrite( int pin, int level)
-{
-    if ( GTK ) {
-	// analogWrite and GTK don't go together
-	bcm2835_gpio_write( pin, level);
-	return;
-    }
-    if ( level < 0 ) level = 0;
-    if ( level > 1023 ) level = 1023;
-    int high = level;
-    int low = 1023 - level;
+// digitalWrite is defined in ArduinoCore.h
+// digitalRead is defined in ArduinoCore.h
 
-    // if pin already in use
-    for ( int i = 0; i < pwmgoMax; i++ )
-	if ( pwmgo[i].pin == pin ) {
-	    if ( !level ) {
-		// stop thread
-		pwmgo[i].go = false;
-		pwmgo[i].pwmthread.join();
-		pwmgo[i].high = -1;
-		pwmgo[i].low = -1;
-		pwmgo[i].pin = -1;
-	    }
-	    else {
-		// renew thread
-		pwmgo[i].high = high;
-		pwmgo[i].low = low;
-	    }
-	    return;
-	}
+// delay is defined in bcm2835.h
+// delayMicroseconds is defined in bcm2835.h
 
-    // find a free thread
-    for ( int i = 0; i < pwmgoMax; i++ )
-	if ( pwmgo[i].pin < 0 ) {
-	    // start thread
-	    pwmgo[i].pin = pin;
-	    pwmgo[i].high = high;
-	    pwmgo[i].low = low;
-	    pwmgo[i].go = true;
-	    pwmgo[i].pwmthread = thread( pwmgo[i].pwmworker);
-	    break;
-	}
-}
-
-int analogRead (int pin){
-
-	int value;
-	char selected_channel[1];
-	char read_values[2];
-
-	if (pin == 0) {
-		selected_channel[0] = 0xDC;
-	} else if (pin == 1){
-		selected_channel[0] = 0x9C;
-	} else if (pin == 2){
-		selected_channel[0] = 0xCC ;
-	} else if (pin == 3){
-		selected_channel[0] = 0x8C;
-	} else if (pin == 4){
-		selected_channel[0] = 0xAC;
-	} else if (pin == 5){
-		selected_channel[0] = 0xEC;
-	} else if (pin == 6){
-		selected_channel[0] = 0xBC;
-	} else if (pin == 7){
-		selected_channel[0] = 0xFC;
-	}
-
-	Wire.begin();
-	Wire.beginTransmission(8);
-	Wire.read_rs(selected_channel, read_values, 2);
-	Wire.read_rs(selected_channel, read_values, 2);
-
-	value = int(read_values[0])*16 + int(read_values[1]>>4);
-	value = value * 1023 / 4095;  //mapping the value between 0 and 1023
-	return value;
-}
-
-void attachInterrupt(int p,void (*f)(), uint m){
-	int GPIOPin = raspberryPinNumber(p);
-	pthread_t *threadId = getThreadIdFromPin(p);
-	struct ThreadArg *threadArgs = (ThreadArg *)malloc(sizeof(ThreadArg));
-	threadArgs->func = f;
-	threadArgs->pin = GPIOPin;
-
-	//Export pin for interrupt
-	FILE *fp = fopen("/sys/class/gpio/export","w");
-	if (fp == NULL){
-		fprintf(stderr,"Unable to export pin %d for interrupt\n",p);
-		exit(1);
-	}else{
-		fprintf(fp,"%d",GPIOPin);
-	}
-	fclose(fp);
-
-	//The system to create the file /sys/class/gpio/gpio<GPIO number>
-	//So we wait a bit
-	delay(1L);
-
-	char * interruptFile = NULL;
-	asprintf(&interruptFile, "/sys/class/gpio/gpio%d/edge",GPIOPin);
-
-	//Set detection condition
-	fp = fopen(interruptFile,"w");
-	if (fp == NULL){
-		fprintf(stderr,"Unable to set detection type on pin %d\n",p);
-		exit(1);
-	}else{
-		switch(m){
-			case RISING: fprintf(fp,"rising");break;
-			case FALLING: fprintf(fp,"falling");break;
-			default: fprintf(fp,"both");break;
-		}
-
-	}
-	fclose(fp);
-
-	if(*threadId == 0){
-		//Create a thread passing the pin and function
-		pthread_create (threadId, NULL, threadFunction, (void *)threadArgs);
-	}else{
-		//First cancel the existing thread for that pin
-		pthread_cancel(*threadId);
-		//Create a thread passing the pin, function and mode
-		pthread_create (threadId, NULL, threadFunction, (void *)threadArgs);
-	}
-
-}
-
-void detachInterrupt(int p){
-	int GPIOPin = raspberryPinNumber(p);
-
-	FILE *fp = fopen("/sys/class/gpio/unexport","w");
-	if (fp == NULL){
-		fprintf(stderr,"Unable to unexport pin %d for interrupt\n",p);
-		exit(1);
-	}else{
-		fprintf(fp,"%d",GPIOPin);
-	}
-	fclose(fp);
-
-	pthread_t *threadId = getThreadIdFromPin(p);
-	pthread_cancel(*threadId);
-}
-
-// For the remaining part:
-//
-// Copyright 2020 D.E.Repolev
-//
-// This file is part of DeviceLib. DeviceLib is free software and you may distribute it under
-// the terms of the GNU General Public License (version 3 or later) as published by the
-// Free Software Foundation. The full license text you find at 'https://www.gnu.org/licenses'.
-// Disclaimer: DeviceLib is distributed without any warranty.
-
-
-////////////////////
-// TIME FUNCTIONS //
-////////////////////
+//////////////////////
+// HELPER FUNCTIONS //
+//////////////////////
 
 hirestime g_start;
 
@@ -411,6 +104,370 @@ long micros()
 {
     hirestime now = chrono::high_resolution_clock::now();
     return chrono::duration_cast<chrono::microseconds>( now - g_start).count();
+}
+
+///////////////////
+// PWM THREADING //
+///////////////////
+
+struct pwmgoStruct {
+	void (*pwmworker)();
+	thread pwmthread;
+	int  pin;
+	int  high;
+	int  low;
+	bool go;
+};
+
+#define pwmgoMax 5 // number of pwmXLoop routines
+pwmgoStruct pwmgo[pwmgoMax];
+
+void pwm0loop()
+{
+    while ( pwmgo[0].go ) {
+	digitalWrite( pwmgo[0].pin, HIGH);
+	delayMicroseconds( pwmgo[0].high);
+	digitalWrite( pwmgo[0].pin, LOW);
+	delayMicroseconds( pwmgo[0].low);
+    }
+}
+
+void pwm1loop()
+{
+    while ( pwmgo[1].go ) {
+	digitalWrite( pwmgo[1].pin, HIGH);
+	delayMicroseconds( pwmgo[1].high);
+	digitalWrite( pwmgo[1].pin, LOW);
+	delayMicroseconds( pwmgo[1].low);
+    }
+}
+
+void pwm2loop()
+{
+    while ( pwmgo[2].go ) {
+	digitalWrite( pwmgo[2].pin, HIGH);
+	delayMicroseconds( pwmgo[2].high);
+	digitalWrite( pwmgo[2].pin, LOW);
+	delayMicroseconds( pwmgo[2].low);
+    }
+}
+
+void pwm3loop()
+{
+    while ( pwmgo[3].go ) {
+	digitalWrite( pwmgo[3].pin, HIGH);
+	delayMicroseconds( pwmgo[3].high);
+	digitalWrite( pwmgo[3].pin, LOW);
+	delayMicroseconds( pwmgo[3].low);
+    }
+}
+
+void pwm4loop()
+{
+    while ( pwmgo[4].go ) {
+	digitalWrite( pwmgo[4].pin, HIGH);
+	delayMicroseconds( pwmgo[4].high);
+	digitalWrite( pwmgo[4].pin, LOW);
+	delayMicroseconds( pwmgo[4].low);
+    }
+}
+
+struct bcm2835_peripheral{
+    unsigned long addr_p;
+    int mem_fd;
+    void *map;
+    volatile unsigned int *addr;
+};
+
+struct ThreadArg{
+    void (*func)();
+    int pin;
+};
+
+pthread_t idThread2;
+pthread_t idThread3;
+pthread_t idThread4;
+pthread_t idThread5;
+pthread_t idThread6;
+pthread_t idThread7;
+pthread_t idThread8;
+pthread_t idThread9;
+pthread_t idThread10;
+pthread_t idThread11;
+pthread_t idThread12;
+pthread_t idThread13;
+
+#define IOBASE   0x3f000000
+struct bcm2835_peripheral bsc_rev1 = {IOBASE + 0X205000};
+struct bcm2835_peripheral bsc_rev2 = {IOBASE + 0X804000};
+struct bcm2835_peripheral bsc0;
+
+int getBoardRev()
+{
+	FILE *cpu_info;
+	char line [120];
+	char *c,finalChar;
+	
+	if ((cpu_info = fopen("/proc/cpuinfo","r"))==NULL){
+		fprintf(stderr,"Unable to open /proc/cpuinfo. Cannot determine board reivision.\n");
+		exit(1);
+	}
+	
+	while (fgets (line,120,cpu_info) != NULL){
+		if(strncmp(line,"Revision",8) == 0) break;
+	}
+	
+	fclose(cpu_info);
+	
+	if (line == NULL){
+		fprintf (stderr, "Unable to determine board revision from /proc/cpuinfo.\n") ;
+		exit(1);
+	}
+	
+	for (c = line ; *c ; ++c)
+    if (isdigit (*c))
+      break ;
+
+	if (!isdigit (*c)){
+		fprintf (stderr, "Unable to determine board revision from /proc/cpuinfo\n") ;
+		fprintf (stderr, "  (Info not found in: %s\n", line) ;
+		exit(1);
+	}
+	
+	finalChar = c [strlen (c) - 2] ;
+	
+	if ((finalChar == '2') || (finalChar == '3')){
+		bsc0 = bsc_rev1;
+		return 1;
+	}else{
+		bsc0 = bsc_rev2;
+		return 2;
+	}
+}
+
+pthread_t *getThreadIdFromPin(int pin){
+	switch(pin){
+		case 2: return &idThread2; break;
+		case 3: return &idThread3; break;
+		case 4: return &idThread4; break;
+		case 5: return &idThread5; break;
+		case 6: return &idThread6; break;
+		case 7: return &idThread7; break;
+		case 8: return &idThread8; break;
+		case 9: return &idThread9; break;
+		case 10: return &idThread10; break;
+		case 11: return &idThread11; break;
+		case 12: return &idThread12; break;
+		case 13: return &idThread13; break;
+	}
+    return 0; // should never come here
+}
+
+/* This is the function that will be running in a thread if
+ * attachInterrupt() is called */
+void * threadFunction(void *args){
+	ThreadArg *arguments = (ThreadArg *)args;
+	int pin = arguments->pin;
+	
+	int GPIO_FN_MAXLEN = 32;
+	int RDBUF_LEN = 5;
+	
+	char fn[GPIO_FN_MAXLEN];
+	int fd,ret;
+	struct pollfd pfd;
+	char rdbuf [RDBUF_LEN];
+	
+	memset(rdbuf, 0x00, RDBUF_LEN);
+	memset(fn,0x00,GPIO_FN_MAXLEN);
+	
+	snprintf(fn, GPIO_FN_MAXLEN-1, "/sys/class/gpio/gpio%d/value",pin);
+	fd=open(fn, O_RDONLY);
+	if(fd<0){
+		perror(fn);
+		exit(1);
+	}
+	pfd.fd=fd;
+	pfd.events=POLLPRI;
+	
+	ret=unistd::read(fd,rdbuf,RDBUF_LEN-1);
+	if(ret<0){
+		perror("Error reading interrupt file\n");
+		exit(1);
+	}
+	
+	while(1){
+		memset(rdbuf, 0x00, RDBUF_LEN);
+		unistd::lseek(fd, 0, SEEK_SET);
+		ret=poll(&pfd, 1, -1);
+		if(ret<0){
+			perror("Error waiting for interrupt\n");
+			unistd::close(fd);
+			exit(1);
+		}
+		if(ret==0){
+			printf("Timeout\n");
+			continue;
+		}
+		ret=unistd::read(fd,rdbuf,RDBUF_LEN-1);
+		if(ret<0){
+			perror("Error reading interrupt file\n");
+			exit(1);
+		}
+		//Interrupt. We call user function.
+		arguments->func();
+	}
+}
+
+
+///////////////////////////
+// ARDUINO CORE EXTENDED //
+///////////////////////////
+
+void analogWrite( uint8_t pin, uint16_t level)
+{
+    if ( GTK ) {
+	// analogWrite and GTK don't go together
+	digitalWrite( pin, level);
+	return;
+    }
+
+    if ( level < 0 ) level = 0;
+    if ( level > 1023 ) level = 1023;
+    int high = level;
+    int low = 1023 - level;
+
+    // if pin already in use
+    for ( int i = 0; i < pwmgoMax; i++ )
+	if ( pwmgo[i].pin == pin ) {
+	    if ( !level ) {
+		// stop thread
+		pwmgo[i].go = false;
+		pwmgo[i].pwmthread.join();
+		pwmgo[i].high = -1;
+		pwmgo[i].low = -1;
+		pwmgo[i].pin = -1;
+	    }
+	    else {
+		// renew thread
+		pwmgo[i].high = high;
+		pwmgo[i].low = low;
+	    }
+	    return;
+	}
+
+    // find a free thread
+    for ( int i = 0; i < pwmgoMax; i++ )
+	if ( pwmgo[i].pin < 0 ) {
+	    // start thread
+	    pwmgo[i].pin = pin;
+	    pwmgo[i].high = high;
+	    pwmgo[i].low = low;
+	    pwmgo[i].go = true;
+	    pwmgo[i].pwmthread = thread( pwmgo[i].pwmworker);
+	    break;
+	}
+}
+
+/*
+int analogRead (int pin){
+
+	int value;
+	char selected_channel[1];
+	char read_values[2];
+
+	if (pin == 0) {
+		selected_channel[0] = 0xDC;
+	} else if (pin == 1){
+		selected_channel[0] = 0x9C;
+	} else if (pin == 2){
+		selected_channel[0] = 0xCC ;
+	} else if (pin == 3){
+		selected_channel[0] = 0x8C;
+	} else if (pin == 4){
+		selected_channel[0] = 0xAC;
+	} else if (pin == 5){
+		selected_channel[0] = 0xEC;
+	} else if (pin == 6){
+		selected_channel[0] = 0xBC;
+	} else if (pin == 7){
+		selected_channel[0] = 0xFC;
+	}
+
+	Wire.begin();
+	Wire.beginTransmission(8);
+	Wire.read_rs(selected_channel, read_values, 2);
+	Wire.read_rs(selected_channel, read_values, 2);
+
+	value = int(read_values[0])*16 + int(read_values[1]>>4);
+	value = value * 1023 / 4095;  //mapping the value between 0 and 1023
+	return value;
+}
+*/
+void attachInterrupt( uint8_t p,void (*f)(), uint m){
+	int GPIOPin = p;
+	pthread_t *threadId = getThreadIdFromPin(p);
+	struct ThreadArg *threadArgs = (ThreadArg *)malloc(sizeof(ThreadArg));
+	threadArgs->func = f;
+	threadArgs->pin = GPIOPin;
+	
+	//Export pin for interrupt
+	FILE *fp = fopen("/sys/class/gpio/export","w");
+	if (fp == NULL){
+		fprintf(stderr,"Unable to export pin %d for interrupt\n",p);
+		exit(1);
+	}else{
+		fprintf(fp,"%d",GPIOPin); 
+	}
+	fclose(fp);
+	
+	//The system to create the file /sys/class/gpio/gpio<GPIO number>
+	//So we wait a bit
+	delay(1L);
+	
+	char * interruptFile = NULL;
+	asprintf(&interruptFile, "/sys/class/gpio/gpio%d/edge",GPIOPin);
+	
+	//Set detection condition
+	fp = fopen(interruptFile,"w");
+	if (fp == NULL){
+		fprintf(stderr,"Unable to set detection type on pin %d\n",p);
+		exit(1);
+	}else{
+		switch(m){
+			case RISING: fprintf(fp,"rising");break;
+			case FALLING: fprintf(fp,"falling");break;
+			default: fprintf(fp,"both");break;
+		}
+		
+	}
+	fclose(fp);
+	
+	if(*threadId == 0){
+		//Create a thread passing the pin and function
+		pthread_create (threadId, NULL, threadFunction, (void *)threadArgs);
+	}else{
+		//First cancel the existing thread for that pin
+		pthread_cancel(*threadId);
+		//Create a thread passing the pin, function and mode
+		pthread_create (threadId, NULL, threadFunction, (void *)threadArgs);
+	}
+	
+}
+
+void detachInterrupt(uint8_t p){
+	int GPIOPin = p;
+	
+	FILE *fp = fopen("/sys/class/gpio/unexport","w");
+	if (fp == NULL){
+		fprintf(stderr,"Unable to unexport pin %d for interrupt\n",p);
+		exit(1);
+	}else{
+		fprintf(fp,"%d",GPIOPin); 
+	}
+	fclose(fp);
+	
+	pthread_t *threadId = getThreadIdFromPin(p);
+	pthread_cancel(*threadId);
 }
 
 
@@ -459,7 +516,6 @@ uint8_t highByte( uint16_t byte)
 {
 	return (uint8_t) (byte & 0xFF00) >> 8;
 }
-
 
 //////////////////
 // CLASS SERIAL //
@@ -743,11 +799,11 @@ int8_t SerialRPi::read()
     return chr;
 }
 
-byte SerialRPi::readB( const char stop, byte data[], const byte len, bool dostop)
+uint8_t SerialRPi::readB( const char stop, uint8_t data[], const uint8_t len, bool dostop)
 {
     memset( data, 0, len);
     char chr;
-    byte cnt = 0;
+    uint8_t cnt = 0;
     hirestime ht = currentTime();
     do {
 	if ( diffMillis( currentTime(), ht) > m_timeout )
@@ -766,12 +822,12 @@ byte SerialRPi::readB( const char stop, byte data[], const byte len, bool dostop
     return cnt;
 }
 
-byte SerialRPi::readBytes( byte data[], const byte len)
+uint8_t SerialRPi::readBytes( uint8_t data[], const uint8_t len)
 {
     return readB( 0, data, len, false);
 }
 
-byte SerialRPi::readBytesUntil( const char stop, byte data[], const byte len)
+uint8_t SerialRPi::readBytesUntil( const char stop, uint8_t data[], const uint8_t len)
 {
     return readB( stop, data, len, true);
 }
@@ -818,7 +874,7 @@ void SerialRPi::setTimeout( ulong millis)
     m_timeout = millis;
 }
 
-uint SerialRPi::write( const byte data)
+uint SerialRPi::write( const uint8_t data)
 {
     return unistd::write( m_console ? STDOUT_FILENO : m_uart, &data, 1);
 }
@@ -829,7 +885,7 @@ uint SerialRPi::write( const String str)
     return unistd::write( m_console ? STDOUT_FILENO : m_uart, s.c_str(), s.length());
 }
 
-uint SerialRPi::write( const byte buf[], const uint len)
+uint SerialRPi::write( const uint8_t buf[], const uint len)
 {
     return unistd::write( m_console ? STDOUT_FILENO : m_uart, &buf, len);
 }
@@ -837,17 +893,13 @@ uint SerialRPi::write( const byte buf[], const uint len)
 SerialRPi Serial( true);
 SerialRPi Serial1( false);
 
-//////////////////////
-// END CLASS SERIAL //
-//////////////////////
-
 ///////////////////
 // ARDUINO START //
 ///////////////////
 
 extern void setup();	// must be declared in the '<application>.cpp' file
 extern void loop();	// must be declared in the '<application>.cpp' file
-
+			// the <application>.cpp' file must start with: #include "Arduino.h"
 /////////
 // GTK //
 /////////
@@ -858,12 +910,20 @@ static bool g_running = true;
 static GtkWidget *WINDOW;
 static GtkWidget *BODY;
 static GtkWidget *DRAG = NULL;
+static GtkWidget *DRAW;
+static cairo_t	 *CAIRO;
+static GdkRGBA 	 DRAWCOLOR;
+static GdkRGBA 	 FILLCOLOR;
+static GdkRGBA 	 BGCOLOR;	// application background color
 static WidgetList CURSOR;
 static bool canDrag = false;
 CALLBACK mouseLClick = NULL;
 CALLBACK mouseRClick = NULL;
 CALLBACK mouseLRelease = NULL;
 CALLBACK mouseRRelease = NULL;
+CALLBACK drawPaint = NULL;
+static uint16_t sizeX = 250;
+static uint16_t sizeY = 0;
 static uint16_t mouseXpos = 0;
 static uint16_t mouseYpos = 0;
 static uint16_t widgetXoffs = 0;
@@ -1040,11 +1100,20 @@ gboolean onMouseRelease( GtkWidget *widget, GdkEventButton *event)
     return true;
 }
 
+gboolean onPaint( GtkWidget *widget, cairo_t *cr, gpointer data)
+{
+    CAIRO = cr;
+    gdk_cairo_set_source_rgba( CAIRO, &BGCOLOR);
+    cairo_paint( cr);
+    if ( drawPaint ) drawPaint();
+    return false;
+}
+
 void activate( GtkApplication *app, gpointer user_data)
 {
     WINDOW = gtk_application_window_new( app);
     gtk_window_set_title( GTK_WINDOW( WINDOW), "GTK-APP");
-    gtk_window_set_default_size( GTK_WINDOW( WINDOW), 250, 0);
+    gtk_window_set_default_size( GTK_WINDOW( WINDOW), sizeX, sizeY);
     gtk_window_set_position( GTK_WINDOW( WINDOW), GTK_WIN_POS_CENTER);
     g_signal_connect( G_OBJECT( WINDOW), "delete-event", G_CALLBACK( onWindowClose), NULL);
 
@@ -1063,12 +1132,32 @@ void activate( GtkApplication *app, gpointer user_data)
     gtk_container_add( GTK_CONTAINER( WINDOW), BODY);
     gtk_widget_set_name( BODY, "BODY");
 
+    DRAWCOLOR = { 0.0, 0.0, 0.0, 1.0};
+    FILLCOLOR = { 0.75, 0.75, 0.75, 1.0};
+    BGCOLOR = { 0.75, 0.75, 0.75, 1.0};
+    DRAW = gtk_drawing_area_new();
+    gtk_widget_set_size_request( DRAW, sizeX, sizeY);
+    g_signal_connect( G_OBJECT( DRAW), "draw", G_CALLBACK( onPaint), NULL);
+    gtk_widget_set_no_show_all( DRAW, true);
+    gtk_widget_set_name( DRAW, "DRAWIT");
+    gtk_widget_show( DRAW);
+    gtk_fixed_put( (GtkFixed*) BODY, DRAW, 0, 0);
+
     setup();
+
     gtk_widget_show_all( WINDOW);
 }
 
 // interface
 // ---------
+
+void setPaperColor( uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha)
+{
+    BGCOLOR.red = (double) red / 255.0;
+    BGCOLOR.green = (double) green / 255.0;
+    BGCOLOR.blue = (double) blue / 255.0;
+    BGCOLOR.alpha = (double) alpha / 255.0;
+}
 
 void setTitle( String title)
 {
@@ -1077,7 +1166,20 @@ void setTitle( String title)
 
 void setSize( uint16_t width, uint16_t height)
 {
+    sizeX = width;
+    sizeY = height;
     gtk_window_set_default_size( GTK_WINDOW( WINDOW), width, height);
+    gtk_widget_set_size_request( DRAW, width, height);
+}
+
+void setPosition( uint16_t x, uint16_t y)
+{
+    gtk_window_move( GTK_WINDOW( WINDOW), x, y);
+}
+
+void setFullScreen( bool fullscreen)
+{
+    gtk_window_fullscreen( GTK_WINDOW( WINDOW));
 }
 
 void* create( uint8_t type, String name)
@@ -1103,25 +1205,26 @@ void* create( uint8_t type, String name, String param)
     GtkWidget *item;
 
     switch ( type ) {
-        case tImage:	item = gtk_image_new_from_file( param.c_str());
+        case IMAGE:	item = gtk_image_new_from_file( param.c_str());
                         applyStyle( item, IMAGESTYLE);
                         break;
-        case tLabel:	item = gtk_label_new( param.c_str());
+        case LABEL:	item = gtk_label_new( param.c_str());
                         applyStyle( item, LABELSTYLE);
                         break;
-        case tEdit:	    item = gtk_entry_new();
+        case EDIT:	    item = gtk_entry_new();
                         gtk_entry_set_width_chars( (GtkEntry*) item, 1);
                         gtk_entry_set_text( (GtkEntry*) item, param.c_str());
                         applyStyle( item, EDITSTYLE);
                         break;
-        case tButton:	item = gtk_button_new_with_label( param.c_str()); // button text
+        case BUTTON:	item = gtk_button_new_with_label( param.c_str()); // button text
                         applyStyle( item, BUTTONSTYLE);
 			g_signal_connect( item, "button_press_event", G_CALLBACK( onMouseClick), NULL);
 			gtk_widget_set_events( item, GDK_BUTTON_PRESS_MASK);
 			g_signal_connect( item, "button_release_event", G_CALLBACK( onMouseRelease), NULL);
 			gtk_widget_set_events( item, GDK_BUTTON_RELEASE_MASK);
                         break;
-        case tCheck:	item = gtk_check_button_new_with_label( param.c_str()); // button tekst
+        case RADIO:
+        case CHECK:	item = gtk_check_button_new_with_label( param.c_str()); // button tekst
                         applyStyle( item, CHECKSTYLE);
                         break;
 //	    case tRadio:	item = gtk_radio_button_new_with_label( ); break;
@@ -1142,11 +1245,12 @@ void appendDefaultStyle( uint8_t type, String style)
         style + " }";
 
     switch ( type ) {
-        case tImage:	IMAGESTYLE = st; break;
-        case tLabel:	LABELSTYLE = st; break;
-        case tEdit:	    EDITSTYLE = st; break;
-        case tButton:	BUTTONSTYLE = st; break;
-        case tCheck:	CHECKSTYLE = st; break;
+        case IMAGE:	IMAGESTYLE = st; break;
+        case LABEL:	LABELSTYLE = st; break;
+        case EDIT:	EDITSTYLE = st; break;
+        case BUTTON:	BUTTONSTYLE = st; break;
+        case RADIO:
+        case CHECK:	CHECKSTYLE = st; break;
 //	    case tRadio:	RADIONSTYLE = st; break;
     }
 }
@@ -1156,7 +1260,7 @@ void setSize( void* widget, uint16_t width, uint16_t height)
     gtk_widget_set_size_request( (GtkWidget*) widget, width, height);
 }
 
-void place( void* widget, uint16_t x, uint16_t y)
+void setPosition( void* widget, uint16_t x, uint16_t y)
 {
     gtk_fixed_move( (GtkFixed*) BODY, (GtkWidget*) widget, x, y);
 }
@@ -1221,16 +1325,25 @@ void setDragField( uint16_t left, uint16_t top, uint16_t right, uint16_t bottom)
 void setText( void* widget, uint8_t type, String text)
 {
     switch ( type ) {
-	case tEdit:	gtk_entry_set_text( (GtkEntry*) widget, text.c_str()); break;
-	case tLabel:	gtk_label_set_text( (GtkLabel*) widget, text.c_str()); break;
+	case EDIT:	applyStyle( (GtkWidget*) widget, EDITSTYLE);
+			gtk_entry_set_text( (GtkEntry*) widget, text.c_str());
+			break;
+
+	case LABEL:	applyStyle( (GtkWidget*) widget, LABELSTYLE);
+			gtk_label_set_text( (GtkLabel*) widget, text.c_str());
+			break;
+
+	case BUTTON:	applyStyle( (GtkWidget*) widget, BUTTONSTYLE);
+			gtk_button_set_label( (GtkButton*) widget, text.c_str());
+			break;
     }
 }
 
 String text( void* widget, uint8_t type)
 {
     switch ( type ) {
-	case tEdit:	return gtk_entry_get_text( (GtkEntry*) widget);
-	case tLabel:	return gtk_label_get_text( (GtkLabel*) widget);
+	case EDIT:	return gtk_entry_get_text( (GtkEntry*) widget);
+	case LABEL:	return gtk_label_get_text( (GtkLabel*) widget);
     }
     return "";
 }
@@ -1266,7 +1379,7 @@ void *mouseWidget( String wname)
                 break;
     if ( ix >= 0 ) {
         GtkAllocation rect;
-        GtkWidget* widget = (GtkWidget*) CURSOR.at( ix);
+	GtkWidget* widget = (GtkWidget*) CURSOR.at( ix);
         gtk_widget_get_allocation( widget, &rect);
         widgetXoffs = mouseXpos - rect.x;
         widgetYoffs = mouseYpos - rect.y;
@@ -1299,6 +1412,62 @@ void callOnMouseLRelease( CALLBACK routine)
 void callOnMouseRRelease( CALLBACK routine)
 {
     mouseRRelease = routine;
+}
+
+void setLineColor( uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha)
+{
+    DRAWCOLOR.red = (double) red / 255.0;
+    DRAWCOLOR.green = (double) green / 255.0;
+    DRAWCOLOR.blue = (double) blue / 255.0;
+    DRAWCOLOR.alpha = (double) alpha / 255.0;
+}
+
+void setFillColor( uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha)
+{
+    FILLCOLOR.red = (double) red / 255.0;
+    FILLCOLOR.green = (double) green / 255.0;
+    FILLCOLOR.blue = (double) blue / 255.0;
+    FILLCOLOR.alpha = (double) alpha / 255.0;
+}
+
+void drawLine( uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_t thickness)
+{
+    cairo_set_line_width( CAIRO, thickness);
+    cairo_move_to( CAIRO, x1, y1);
+    cairo_line_to( CAIRO, x2, y2);
+    gdk_cairo_set_source_rgba( CAIRO, &DRAWCOLOR);
+    cairo_stroke( CAIRO);
+}
+
+void drawRectangle( uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t thickness, bool fill)
+{
+    cairo_set_line_width( CAIRO, thickness);
+    cairo_rectangle( CAIRO, x, y, width, height);
+    gdk_cairo_set_source_rgba( CAIRO, &DRAWCOLOR);
+    cairo_stroke( CAIRO);
+    if ( fill ) {
+	cairo_rectangle( CAIRO, x, y, width, height);
+	gdk_cairo_set_source_rgba( CAIRO, &FILLCOLOR);
+	cairo_fill( CAIRO);
+    }
+}
+
+void drawCircle( uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t thickness, bool fill)
+{
+    cairo_set_line_width( CAIRO, thickness);
+    cairo_arc( CAIRO, x + width / 2.0, y + height / 2.0, MIN( width, height) / 2.0, 0, 2*G_PI);
+    gdk_cairo_set_source_rgba( CAIRO, &DRAWCOLOR);
+    cairo_stroke( CAIRO);
+    if ( fill ) {
+	cairo_arc( CAIRO, x + width / 2.0, y + height / 2.0, MIN( width, height) / 2.0, 0, 2*G_PI);
+	gdk_cairo_set_source_rgba( CAIRO, &FILLCOLOR);
+	cairo_fill( CAIRO);
+    }
+}
+
+void callOnDraw( CALLBACK routine)
+{
+    drawPaint = routine;
 }
 
 uint8_t addStickyArea( uint16_t left, uint16_t top, uint16_t width, uint16_t height)
@@ -1365,10 +1534,10 @@ int main( int argc, char **argv)
     pwmgo[3].pwmworker = pwm3loop;
     pwmgo[4].pwmworker = pwm4loop;
     for ( int i = 0; i < pwmgoMax; i++ ) {
-        pwmgo[i].pin = -1;
-        pwmgo[i].high = -1;
-        pwmgo[i].low = -1;
-        pwmgo[i].go = false;
+	pwmgo[i].pin = -1;
+	pwmgo[i].high = -1;
+	pwmgo[i].low = -1;
+	pwmgo[i].go = false;
     }
 
     g_start = chrono::high_resolution_clock::now();
@@ -1385,6 +1554,5 @@ int main( int argc, char **argv)
 	while ( 1 ) loop();
     }
 
-    bcm2835_close();
     return 0;
 }

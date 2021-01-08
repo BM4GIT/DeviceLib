@@ -19,7 +19,7 @@ RgbLed::RgbLed()
 
 RgbLed::~RgbLed()
 {
-    setOff();
+    off();
 }
 
 void RgbLed::setPin( uint8_t pinRed,
@@ -57,20 +57,20 @@ void RgbLed::setColor( uint8_t red, uint8_t green, uint8_t blue)
 	m_blue.setBrightness( blue);
 }
 
-void RgbLed::setOn()
+void RgbLed::on()
 {
-	Actuator::setOn();
-	m_red.setOn();
-	m_green.setOn();
-	m_blue.setOn();
+	Actuator::on();
+	m_red.on();
+	m_green.on();
+	m_blue.on();
 }
 
-void RgbLed::setOff()
+void RgbLed::off()
 {
-	Actuator::setOff();
-	m_red.setOff();
-	m_green.setOff();
-	m_blue.setOff();
+	Actuator::off();
+	m_red.off();
+	m_green.off();
+	m_blue.off();
 }
 
 

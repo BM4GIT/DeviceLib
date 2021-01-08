@@ -1,0 +1,262 @@
+TODOLIST
+========
+
+30-12-2020 [DOC] LinkedList en StringList beschrijven
+-----------------------------------------------------
+Samen met class Average in een extra groep
+
+10-12-2020 [DOC] code-voorbeeld bij class Scale
+-----------------------------------------------
+
+15-11-2020 [ARD] 'SqlClient' voor arduino geschikt maken
+--------------------------------------------------------
+[sqlclient.cpp]
+[sqlclient.h]
+
+
+IMPLEMENTATIE
+=============
+
+
+RELEASES
+========
+
+##############################
+## GITHUB UPDATE 08-01-2021 ##
+##############################
+
+05-01-2021 [RPI/DOC] Consequente benaming routines
+--------------------------------------------------
+[vrijwel alle bestanden] Bijv: setOn() wordt on() en setOff() wordt off()
+
+05-01-2021 [RPI] Bugfix: reset m_socket in TcpClient::close
+-----------------------------------------------------------
+[tcpclient.cpp]
+
+05-01-2021 [RPI/DOC] Uitbreiding en redress van de server
+---------------------------------------------------------
+[tcpserver.cpp]
+[tcpserver.h]
+
+30-12-2020 [RPI] Bugfix in getText voor button text
+---------------------------------------------------
+[ArduinoCore.h]
+
+30-12-2020 [RPI] GTK functionele fix in 'setText'
+-------------------------------------------------
+[ArduinoCore.cpp] (applyStyle aan setText toegevoegd)
+
+30-12-2020 [RPI/DOC] routines toegevoegd aan Sound class
+--------------------------------------------------------
+[sound.cpp] (setVolume en playCurrent)
+[sound.h]
+
+26-12-2020 [RPI/DOC] StringList van typedef naar class omgebouwd
+----------------------------------------------------------------
+[linkedlist.h] (+ extra routines: has, first, removeFirst)
+
+#######################################
+## BCM versie is komen te vervallen  ##
+## SYS versie gaat verder als RPI    ##
+## bcm2835 library nu nodig voor RPI ##
+#######################################
+
+26-12-2020 [SYS] iButton vervangen door BCM versie
+--------------------------------------------------
+[ibutton.cpp]
+[ibutton.h]
+
+26-12-2020 [SYS] gpio filesystem vervangen door bcm2835
+-------------------------------------------------------
+[ArduinoCore.cpp]
+[ArduinoCore.h]
+
+22-12-2020 [BCM/SYS/DOC] class Sound asynchroon gemaakt
+-------------------------------------------------------
+[sound.cpp]
+[sound.h]
+
+22-12-2020 [BCM/SYS] enkele linux functies toegevoegd
+-----------------------------------------------------
+[SystemCore.cpp] (nieuw)
+[SystemCore.h]   (nieuw)
+
+22-12-2020 [BCM/SYS/DOC] GTK: tekenen toegevoegd + functienamen aangepast
+-------------------------------------------------------------------------
+[ArduinoCore.cpp]
+[ArduinoCore.h]
+
+10-12-2020 [BCM/SYS/ARD] Compass-class toegevoegd
+-------------------------------------------------
+[mpu9150.cpp] (nieuw)
+[mpu9150.h]   (nieuw)
+
+10-12-2020 [BCM/SYS] wijzig in endTransmission(bool) - gelijk aan Arduino
+10-12-2020 [BCM] voeg routine available() toe - gelijk aan Arduino
+-------------------------------------------------------------------------
+[Wire.h]
+[Wire.cpp]
+
+10-12-2020 [BCM/SYS] voeg dummy F(string) toe - gelijk aan Arduino
+------------------------------------------------------------------
+[Arduino.h]
+[ArduinoGtk.h]
+
+10-12-2020 [BCM/SYS] voeg <math.h> toe - gelijk aan Arduino
+-----------------------------------------------------------
+[Arduino.h]
+[ArduinoGtk.h]
+
+02-12-2020 [BCM/SYS] bugfix: crash vanwege onveilige add/delete van timerevents
+-------------------------------------------------------------------------------
+[device.cpp]
+
+02-12-2020 [BCM/SYS] bugfix: server crash wanneer TcpClient afbreekt en weer verbindt
+-------------------------------------------------------------------------------------
+[tcpserver.cpp]
+
+29-11-2020 [BCM/SYS/ARD] 'TcpClient' ontwikkeld
+-----------------------------------------------
+[tcpclient.cpp] (nieuw)
+[tcpclient.h]   (nieuw)
+
+29-11-2020 [BCM/SYS] 'TcpServer' ontwikkeld
+-------------------------------------------
+[tcpserver.cpp] (nieuw)
+[tcpserver.h]   (nieuw)
+
+29-11-2020 [BCM/SYS] 'UsbCamera' gewijzigd in 'Camera'
+------------------------------------------------------
+[usbcamera.cpp]	>> [camera.cpp]
+[usbcamera.h]	>> [camera.h]
+
+15-11-2020 [DOC] 'Json' voorbeeld gemaakt
+-----------------------------------------
+
+15-11-2020 [DOC] 'Nextion' voorbeeld gemaakt
+--------------------------------------------
+
+15-11-2020 [BCM/SYS/DOC] 'ArduinoGtk' in plaats van '-D GTK' compile
+--------------------------------------------------------------------
+[ArduinoCore.cpp]
+[ArduinoCore.h]
+[Arduino.h]
+
+##############################
+## GITHUB UPDATE 13-11-2020 ##
+##############################
+
+11-11-2020 [BMC/SYS] 'Nextion' class toegevoegd
+-----------------------------------------------
+[Nextion.h]
+[Nextion.cpp]
+
+11-11-2020 [BCM/SYS] bugfix: reactie muisklik ook in buttons
+------------------------------------------------------------
+[ArduinoCore.cpp]
+
+##############################
+## GITHUB UPDATE 08-11-2020 ##
+##############################
+
+06-11-2020 [BCM/SYS] bugfix: in 'query' eerste alle oude rijen lezen
+--------------------------------------------------------------------
+[sqlclient.cpp] (query geeft geen rijen terug als dit niet eerst gebeurt)
+
+06-11-2020 [BCM/SYS/DOC] routines 'isChecked' en 'setCheck' toegevoegd
+----------------------------------------------------------------------
+[ArduinoCore.cpp]
+[ArduinoCore.h]
+
+06-11-2020 [BCM/SYS/DOC] aan 'setRowValues' en 'getRowValues' widget type toegevoegd
+------------------------------------------------------------------------------------
+[ArduinoCore.cpp]
+[ArduinoCore.h]
+
+06-11-2020 [BCM/SYS] LinkedList<> niet als return waarde
+--------------------------------------------------------
+[sqlclient.cpp] 'nextRow' en 'columHeader' krijgen StringList als parameter
+[sqlclient.h]   in plaats van als return waarde
+
+06-11-2020 [BCM/SYS] in 'toInt' en 'toFloat': string begint met non-cijfer? return 0 
+------------------------------------------------------------------------------------
+[ArduinoString.cpp]
+
+06-11-2020 [BCM/SYS] trim spaces in 'readValue'
+-----------------------------------------------
+[mfrc522.cpp]
+
+04-11-2020 [BCM/SYS] bug: 'show' en 'hide' werken niet
+------------------------------------------------------
+[ArduinoCore.cpp] in 'create' gebruik 'gtk_widget_set_no_show_all'
+
+04-11-2020 [DOC] beschrijving bug in phpMyAdmin + herstel
+---------------------------------------------------------
+
+01-11-2020 [DOC] scherm-module
+------------------------------
+
+01-11-2020 [DOC] Hx711-class
+----------------------------
+[hx711.cpp] (nieuw)
+[hx711.h]   (nieuw)
+
+01-11-2020 [BCM/SYS] tabel afhandeling gtk
+------------------------------------------
+[ArduinoCore.cpp]
+[ArduinoCore.h]
+
+01-11-2020 [BCM/SYS] widget css style
+-------------------------------------
+[ArduinoCore.cpp]
+[ArduinoCore.h]
+
+01-11-2020 [BCM/SYS] bugfix 'onMouseClick' en 'onMouseRelease'
+--------------------------------------------------------------
+[ArduinoCore.cpp] check dat event van de BODY-container komt
+
+01-11-2020 [BCM/SYS] met '#ifdef' pwm-afhandeling buiten GTK geplaatst
+----------------------------------------------------------------------
+[ArduinoCore.cpp]
+[ArduinoCore.h]
+
+01-11-2020 [BCM/SYS] herschikking code met vergelijkbare ordening voor BCM en SYS
+---------------------------------------------------------------------------------
+[ArduinoCore.cpp]
+[ArduinoCore.h]
+
+01-11-2020 [SYS] BCM-versie van GTK ook in SYS geplaatst
+--------------------------------------------------------
+[ArduinoCore.cpp]	(niet getest, exacte kopie van BCM-versie)
+[ArduinoCore.h]
+
+01-11-2020 [BCM/SYS] implementatie van StringList
+-------------------------------------------------
+[sqlclient.h]		'#include <vector>' en 'typedef vector<String> StringList' verwijderd
+[sqlclient.cpp]		'push_back' vervangen door 'add'
+[ArduinoCore.h]		'#include "linkedlist.h"' ipv. '#include "ArduinoString.h"'
+[linkedlist.h]		'#include "ArduinoString.h"' voor RPI en 'typedef LinkedList<String> StringList' toegevoegd
+
+31-10-2020 [BCM] sticky area aan GTK toegevoegd
+-----------------------------------------------
+[ArduinoCore.cpp]
+[ArduinoCore.h]
+
+##############################
+## GITHUB UPDATE 30-10-2020 ##
+##############################
+
+29-10-2020 [BCM] implementatie GTK voltooid
+-------------------------------------------
+[ArduinoCore.cpp]
+[ArduinoCore.h]
+
+27-10-2020 [BCM/SYS] implementatie bit-functies
+-----------------------------------------------
+[ArduinoCore.cpp]
+[ArduinoCore.h]
+
+27-10-2020 [BCM] herschikking code van ArduinoCore
+--------------------------------------------------
+[ArduinoCore.cpp]
+[ArduinoCore.h]

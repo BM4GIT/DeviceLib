@@ -29,7 +29,7 @@ SPISettings::SPISettings() {
     m_mode = SPI_MODE0;
 }
 
-SPISettings::SPISettings( uint8_t speed, uint8_t lsb_msb, uint8_t spimode) {
+SPISettings::SPISettings( uint32_t speed, uint8_t lsb_msb, uint8_t spimode) {
     m_clock = 1; //### omrekenen van speed naar clock
     m_speed = speed;
     m_first = lsb_msb;

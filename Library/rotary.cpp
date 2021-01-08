@@ -98,17 +98,17 @@ void Rotary::read()
     m_tm = millis();
 }
 
-bool Rotary::moving()
+bool Rotary::isMoving()
 {
     return (m_move != Stop);
 }
 
-bool Rotary::forward()
+bool Rotary::movesForward()
 {
     return (m_swap ? (m_move == Backward) : (m_move == Forward));
 }
 
-bool Rotary::backward()
+bool Rotary::movesBackward()
 {
     return (m_swap ? (m_move == Forward) : (m_move == Backward));
 }

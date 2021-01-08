@@ -28,7 +28,7 @@ public:
   int write(uint8_t dat, int len=0);
   int write(String dat, int len=0);
   int write(uint8_t * dat, int len);
-  int endTransmission();
+  int endTransmission( bool dummy = true);
   struct status {
       int code;
       String txt;

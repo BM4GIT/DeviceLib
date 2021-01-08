@@ -153,12 +153,13 @@ bool TcpClient::close()
         return false;
     }
 
-	m_end = true;
-	if ( sckt::write( m_socket, "#END#", 5) < 0 ) {
-        m_error = "Failed to inform server of ending\n.";
-		return false;
+    m_end = true;
+    if ( sckt::write( m_socket, "#END#", 5) < 0 ) {
+    m_error = "Failed to inform server of ending\n.";
+	    return false;
     }
-	sckt::close( m_socket);
+    sckt::close( m_socket);
+    m_socket = -1;
     return true;
 #else
     if ( !client.connected() ) {
@@ -171,7 +172,7 @@ bool TcpClient::close()
 #endif
 }
 
-bool TcpClient::connected()
+bool TcpClient::isConnected()
 {
 #ifdef RPI
 	return (m_socket >= 0);

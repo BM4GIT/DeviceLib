@@ -23,10 +23,10 @@ public:
     void setPin( uint8_t pin, bool pwm = false);
     void setInversion( bool invert = true);
 
-    void setBrightness( uint8_t on, uint8_t off = 0); // percentage
-    void setBlink( uint32_t on = NOBLINK, uint32_t off = NOBLINK ); // millisec
-    void setOn();
-    void setOff();
+    void setBrightness( uint8_t bright_on, uint8_t bright_off = 0); // percentage
+    void setBlink( uint32_t blink_on = NOBLINK, uint32_t blink_off = NOBLINK ); // millisec
+    void on();
+    void off();
 
 private:
     int8_t   m_pin;

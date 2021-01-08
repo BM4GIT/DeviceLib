@@ -20,7 +20,7 @@ void stepperWorker( Stepper *st, uint8_t command, int param, int speed)
         case MOVE :   st->move( param, speed); break;
         case ROTATE : st->rotate( param, speed); break;
         case GO :     st->go( speed); break;
-        default :     st->setOff();
+        default :     st->off();
     }
 }
 #endif
@@ -41,7 +41,7 @@ Stepper::Stepper() : Actuator()
 
 Stepper::~Stepper()
 {
-    setOff();
+    off();
 }
 
 void Stepper::init( uint16_t stepsPerRotation)
@@ -57,7 +57,7 @@ void Stepper::stepBiPolar()
     delayMicroseconds( 10);
 }
 
-void Stepper::off()
+void Stepper::turnoff()
 {
     digitalWrite( m_pin1, 0);
     digitalWrite( m_pin2, 0);
@@ -115,7 +115,7 @@ void Stepper::turn( uint32_t steps, uint8_t speed)
     if ( speed > 100 ) return;
     if ( speed )
     {
-        Actuator::setOn();
+        Actuator::on();
 
         digitalWrite( m_pin3, LOW);
         digitalWrite( m_pin2, m_forward ? HIGH : LOW);
@@ -131,8 +131,8 @@ void Stepper::turn( uint32_t steps, uint8_t speed)
 
         digitalWrite( m_pin3, HIGH);
     }
-    Actuator::setOff();
-    off();
+    Actuator::off();
+    turnoff();
 }
 
 void Stepper::rotate( uint32_t degr, uint8_t speed)
@@ -145,7 +145,7 @@ void Stepper::move( uint32_t msec, uint8_t speed)
 {
     if ( speed > 100 ) return;
     if ( speed ) {
-        Actuator::setOn();
+        Actuator::on();
 
         digitalWrite( m_pin3, LOW);
         digitalWrite( m_pin2, m_forward ? HIGH : LOW);
@@ -161,8 +161,8 @@ void Stepper::move( uint32_t msec, uint8_t speed)
 
         digitalWrite( m_pin3, HIGH);
     }
-    Actuator::setOff();
-    off();
+    Actuator::off();
+    turnoff();
 }
 
 void Stepper::go( uint8_t speed)
@@ -170,7 +170,7 @@ void Stepper::go( uint8_t speed)
     if ( speed > 100 ) return;
 
     if ( speed ) {
-        Actuator::setOn();
+        Actuator::on();
 
         digitalWrite( m_pin3, LOW);
         digitalWrite( m_pin2, m_forward ? HIGH : LOW);
@@ -183,13 +183,13 @@ void Stepper::go( uint8_t speed)
 
         digitalWrite( m_pin3, HIGH);
     }
-    Actuator::setOff();
-    off();
+    Actuator::off();
+    turnoff();
 }
 
-void Stepper::setOff()
+void Stepper::off()
 {
-    Actuator::setOff();
+    Actuator::off();
 #ifdef RPI
     if ( m_run ) {
         m_run->join();
@@ -198,7 +198,7 @@ void Stepper::setOff()
     }
 #endif
     digitalWrite( m_pin3, HIGH);
-    off();
+    turnoff();
 }
 
 bool Stepper::isOn()

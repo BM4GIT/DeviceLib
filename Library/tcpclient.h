@@ -25,7 +25,7 @@ public:
   bool wifi( String ssid, String password);
 
 	bool connect( String host, uint16_t port, String id);
-	bool connected();
+	bool isConnected();
 	bool close();
 
 	bool read( String& data);

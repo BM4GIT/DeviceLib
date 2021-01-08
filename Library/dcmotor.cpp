@@ -17,7 +17,7 @@ DcMotor::DcMotor()
 
 DcMotor::~DcMotor()
 {
-    setOff();
+    off();
 }
 
 void DcMotor::setPin( uint8_t pin, bool pwm)
@@ -36,23 +36,23 @@ void DcMotor::setSpeed( uint8_t speed)
     else
         m_speed = speed * 1023 / 100;
     if ( m_ison )
-        setOn();
+        on();
 }
 
-void DcMotor::setOn()
+void DcMotor::on()
 {
     if ( m_pin < 0 ) return;
-    Actuator::setOn();
+    Actuator::on();
     if ( m_pwm )
         analogWrite( m_pin, m_speed);
     else
         digitalWrite( m_pin, m_speed ? HIGH : LOW);
 }
 
-void DcMotor::setOff()
+void DcMotor::off()
 {
     if ( m_pin < 0 ) return;
-    Actuator::setOff();
+    Actuator::off();
     if ( m_pwm )
         analogWrite( m_pin, 0);
     else

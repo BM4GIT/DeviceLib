@@ -22,7 +22,7 @@ void stepperWorker( Stepper *st, uint8_t command, uint32_t param, uint8_t speed)
         case MOVE :   st->move( param, speed); break;
         case ROTATE : st->rotate( param, speed); break;
         case GO :     st->go( speed); break;
-        default :     st->setOff();
+        default :     st->off();
     }
 }
 #endif
@@ -43,7 +43,7 @@ Stepper::Stepper() : Actuator()
 
 Stepper::~Stepper()
 {
-    setOff();
+    off();
 }
 
 void Stepper::init( uint16_t stepsPerRotation)
@@ -67,7 +67,7 @@ void Stepper::stepUniPolar()
     digitalWrite( m_pin4, g_coils[m_step] & 8);
 }
 
-void Stepper::off()
+void Stepper::turnoff()
 {
     if ( !m_hold ) {
         // wait 100 usec to set motor in position
@@ -121,7 +121,7 @@ void Stepper::turn( uint32_t steps, uint8_t speed)
     if ( speed > 100 ) return;
     if ( speed )
     {
-        Actuator::setOn();
+        Actuator::on();
 
         long dly = (100 - speed) * 100 + 1000;
         while ( steps ) {
@@ -132,8 +132,8 @@ void Stepper::turn( uint32_t steps, uint8_t speed)
             delayMicroseconds( dly);
         }
     }
-    Actuator::setOff();
-    off();
+    Actuator::off();
+    turnoff();
 }
 
 void Stepper::rotate( uint32_t degr, uint8_t speed)
@@ -146,7 +146,7 @@ void Stepper::move( uint32_t msec, uint8_t speed)
 {
     if ( speed > 100 ) return;
     if ( speed ) {
-        Actuator::setOn();
+        Actuator::on();
 
         long dly = (100 - speed) * 100 + 1000;
         long tm = millis() + msec;
@@ -157,8 +157,8 @@ void Stepper::move( uint32_t msec, uint8_t speed)
             delayMicroseconds( dly);
         }
     }
-    Actuator::setOff();
-    off();
+    Actuator::off();
+    turnoff();
 }
 
 void Stepper::go( uint8_t speed)
@@ -166,7 +166,7 @@ void Stepper::go( uint8_t speed)
     if ( speed > 100 ) return;
 
     if ( speed ) {
-        Actuator::setOn();
+        Actuator::on();
 
         long dly = (100 - speed) * 100 + 1000;
         while ( Actuator::isOn() ) {
@@ -174,13 +174,13 @@ void Stepper::go( uint8_t speed)
             delayMicroseconds( dly);
         }
     }
-    Actuator::setOff();
-    off();
+    Actuator::off();
+    turnoff();
 }
 
-void Stepper::setOff()
+void Stepper::off()
 {
-    Actuator::setOff();
+    Actuator::off();
 #ifdef RPI
     if ( m_run ) {
         m_run->join();
@@ -188,7 +188,7 @@ void Stepper::setOff()
         m_run = nullptr;
     }
 #endif
-    off();
+    turnoff();
 }
 
 bool Stepper::isOn()

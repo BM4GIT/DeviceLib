@@ -9,13 +9,12 @@
 	Released into the public domain.
 
 	Adjustments for DeviceLib environment (2020):
-	* added operator []
-	* renamed 'add( ix, item)' to 'insert( ix, item)'
-	* renamed 'get' to 'at'
-	* renamed 'remove' to 'removeAt'
-	* added   'removeAll' calling 'clear'
-	* added   'count' calling 'size'
-	* added    'StringList' typedef
+	* renamed 'add' to 'insert', appended synonym 'insertAt
+	* renamed 'get' to 'at', appended synonym 'operator[]'
+	* appended synonym 'removeAt' for 'remove'
+	* appended synonym 'removeAll' for 'clear'
+	* appended synonym 'count' for 'size'
+	* created class  'StringList' inheriting from LinkedList
 */
 
 
@@ -59,33 +58,36 @@ public:
 		Returns current size of LinkedList
 	*/
 	virtual int size();
-	int count() { return size(); };
+	int count() { return size(); }
 	/*
 		Adds a T object in the specified index;
 		Unlink and link the LinkedList correcly;
 		Increment _size
 	*/
 	virtual bool insert(int index, T);
+	virtual bool insertAt( int index, T t) { return insert( index, t); }
 	/*
 		Adds a T object in the end of the LinkedList;
 		Increment _size;
 	*/
 	virtual bool add(T);
-	/*
-		Adds a T object in the start of the LinkedList;
-		Increment _size;
-	*/
-	virtual bool unshift(T);
+	virtual bool append(T t) { return add(t); }
 	/*
 		Set the object at index, with T;
 		Increment _size;
 	*/
-	virtual bool replace(int index, T);
+	virtual bool unshift(T);
 	/*
 		Replace object at index;
 		If index is not reachable, returns false;
 	*/
-	virtual T removeAt(int index);
+	virtual bool replace(int index, T);
+	virtual bool replaceAt(int index, T t) { return replace( index, t); }
+	/*
+		Remove object at index;
+	*/
+	virtual T remove(int index);
+	virtual T removeAt(int index) { return remove(index); }
 	/*
 		Remove last object;
 	*/
@@ -100,13 +102,13 @@ public:
 		else, return false;
 	*/
 	virtual T at(int index);
-	virtual T operator[](int index);
+	virtual T operator[](int index) { return at(index); }
 
 	/*
 		Clear the entire array
 	*/
 	virtual void clear();
-	void removeAll() { clear(); };
+	void removeAll() { clear(); }
 
 };
 
@@ -299,7 +301,7 @@ T LinkedList<T>::shift(){
 }
 
 template<typename T>
-T LinkedList<T>::removeAt(int index){
+T LinkedList<T>::remove(int index){
 	if (index < 0 || index >= _size)
 	{
 		return T();
@@ -323,17 +325,8 @@ T LinkedList<T>::removeAt(int index){
 	return ret;
 }
 
-
 template<typename T>
 T LinkedList<T>::at(int index){
-	ListNode<T> *tmp = getNode(index);
-
-	return (tmp ? tmp->data : T());
-}
-
-
-template<typename T>
-T LinkedList<T>::operator[](int index){
 	ListNode<T> *tmp = getNode(index);
 
 	return (tmp ? tmp->data : T());
@@ -345,6 +338,40 @@ void LinkedList<T>::clear(){
 		shift();
 }
 
-typedef LinkedList<String> StringList;
+//typedef LinkedList<String> StringList;
+
+class StringList : public LinkedList<String>
+{
+public:
+
+	void removeFirst( String str)
+	{
+		for ( int i = 0; i < size(); i++ ) {
+			ListNode<String> *tmp = getNode(i);
+			if ( str == tmp->data )
+				removeAt( i);
+		}
+	}
+
+	int first( String str)
+	{
+		for ( int i = 0; i < size(); i++ ) {
+			ListNode<String> *tmp = getNode(i);
+			if ( str == tmp->data )
+				return i;
+		}
+		return -1;
+	}
+
+	bool has( String str)
+	{
+		for ( int i = 0; i < size(); i++ ) {
+			ListNode<String> *tmp = getNode(i);
+			if ( str == tmp->data )
+				return true;
+		}
+		return false;
+	}
+};
 
 #endif

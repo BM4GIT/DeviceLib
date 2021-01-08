@@ -23,8 +23,8 @@ public:
     void setPin( uint8_t pin, bool pwm = true);
 
     void setSpeed( uint8_t speed);
-    void setOn();
-    void setOff();
+    void on();
+    void off();
 
 protected:
     int8_t   m_pin;

@@ -14,7 +14,8 @@
 #error NOTE: You cannot use 'sqlclient.h' on Arduino
 #else
 
-#include "Arduino.h"
+#include "ArduinoCore.h"
+#include "ArduinoString.h"
 
 class SqlClient
 {
@@ -25,6 +26,7 @@ public:
 
 	bool connect( const String host, const String database, const String user, const String password);
 	void close();
+	bool isConnected();
 	String error();
 
 	// 'query' sends a query string to the server.
@@ -52,7 +54,7 @@ public:
 	// replaced by the first value (since @@z occurs first in it) and both @@4
 	// tokens are replaced by the second value (since @@4 occurs second).
 	// NB! The number of different '@@n' tokens MUST match the number of values!
-    static String filloutQuery( const String querystr, StringList &values);
+    static String filloutQuery( const String querystr, StringList values);
     static String filloutQuery( const String querystr, ...);
 
 protected:

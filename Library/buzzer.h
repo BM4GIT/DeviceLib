@@ -20,8 +20,8 @@ public:
 
     void setPin( uint8_t pin);
 
-    void setOn();
-    void setOff();
+    void on();
+    void off();
 
 protected:
     int8_t m_pin;

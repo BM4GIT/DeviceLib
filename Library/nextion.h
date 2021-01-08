@@ -9,7 +9,8 @@
 #ifndef NEXTION_H
 #define NEXTION_H
 
-#include "Arduino.h"
+#include "ArduinoCore.h"
+#include "ArduinoString.h"
 
 class Nextion
 {

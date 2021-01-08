@@ -1,4 +1,4 @@
-// file:   distance.h
+// file:   hcsr04.h
 // Copyright 2020 D.E.Repolev
 //
 // This file is part of DeviceLib. DeviceLib is free software and you may distribute it under

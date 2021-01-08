@@ -28,9 +28,9 @@ public:
 
     void read();
 
-    bool pressed();
-    bool released();
-    bool changed();
+    bool isPressed();
+    bool isReleased();
+    bool hasChanged();
 
 private:
 

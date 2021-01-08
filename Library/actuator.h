@@ -18,8 +18,8 @@ public:
     Actuator();
     ~Actuator();
 
-    virtual void setOn();
-    virtual void setOff();
+    virtual void on();
+    virtual void off();
     bool isOn();
 
 protected:

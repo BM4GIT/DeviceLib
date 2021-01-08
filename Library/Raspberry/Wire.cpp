@@ -141,7 +141,7 @@ int wire::write(uint8_t * dat, int len)
   return cnt;
 }
 
-int wire::endTransmission()
+int wire::endTransmission( bool dummy)
 {
   int wrt;
   if (setAddr()){

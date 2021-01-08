@@ -100,12 +100,12 @@ IButton::~IButton()
 {
 }
 
-void IButton::setPin( unsigned int pin)
+void IButton::setPin( uint8_t pin)
 {
     m_pin = pin;
 }
 
-void IButton::setTimeout( int timeout)
+void IButton::setTimeout( uint32_t timeout)
 {
     m_timeout = timeout;
 }
@@ -139,7 +139,7 @@ void IButton::read()
     }
 }
 
-String IButton::tag( long expireAfter)
+String IButton::tag( uint32_t expireAfter)
 {
     String id;
     if ( expireAfter && (millis() > m_stamp + expireAfter) )

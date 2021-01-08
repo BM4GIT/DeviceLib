@@ -1,4 +1,4 @@
-// file:   actuator.cpp
+// file:   SystemCore.h
 // Copyright 2020 D.E.Repolev
 //
 // This file is part of DeviceLib. DeviceLib is free software and you may distribute it under
@@ -6,29 +6,14 @@
 // Free Software Foundation. The full license text you find at 'https://www.gnu.org/licenses'.
 // Disclaimer: DeviceLib is distributed without any warranty.
 
+#ifndef SYSTEMCORE_H
+#define SYSTEMCORE_H
 
-#include "actuator.h"
+#include <unistd.h>
+#include "ArduinoString.h"
 
-Actuator::Actuator()
-{
-    m_ison = false;
-}
+extern pid_t system_async(const char * command, int * infp = NULL, int * outfp = NULL);
+extern int pidof( String proc_name);
+extern String make_linux_path( String path);
 
-Actuator::~Actuator()
-{
-}
-
-void Actuator::on()
-{
-    m_ison = true;
-}
-
-void Actuator::off()
-{
-    m_ison = false;
-}
-
-bool Actuator::isOn()
-{
-    return m_ison;
-}
+#endif // SYSTEMCORE_H

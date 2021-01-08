@@ -31,9 +31,9 @@ public:
     float rpm();  // rotations per minute
     float rps();  // rotations per second
 
-    bool moving();
-    bool forward();
-    bool backward();
+    bool isMoving();
+    bool movesForward();
+    bool movewBackward();
 
 private:
 

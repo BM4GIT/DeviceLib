@@ -25,7 +25,7 @@ public:
 
     void read();
 
-    bool detected();
+    bool hasDetected();
 
 private:
     int8_t  m_pin;

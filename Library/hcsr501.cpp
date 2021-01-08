@@ -34,7 +34,7 @@ void Motion::read()
 }
 
 
-bool Motion::detected()
+bool Motion::hasDetected()
 {
     return m_detect;
 }

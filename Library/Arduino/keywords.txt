@@ -1,6 +1,6 @@
-#####################################
-# Syntax Coloring Map For UbidotsNode
-#####################################
+#######################################
+# Syntax Coloring Map For DeviceLib
+#######################################
 
 #######################################
 # Datatypes (KEYWORD1)
@@ -8,12 +8,14 @@
 
 OneWire	KEYWORD1
 
+Average	KEYWORD1
 Actuator	KEYWORD1
 ADConverter	KEYWORD1
 AirPressure	KEYWORD1
 Average	KEYWORD1
 Beeper	KEYWORD1
 Buzzer	KEYWORD1
+Compass	KEYWORD1
 DcMotor	KEYWORD1
 Device	KEYWORD1
 Distance	KEYWORD1
@@ -23,6 +25,7 @@ Json	KEYWORD1
 Led	KEYWORD1
 LinkedList	KEYWORD1
 Motion	KEYWORD1
+Nextion	KEYWORD1
 RealTime	KEYWORD1
 Rfid	KEYWORD1
 RgbLed	KEYWORD1
@@ -30,8 +33,10 @@ Rotary	KEYWORD1
 Scale   KEYWORD1
 Sensor	KEYWORD1
 Stepper	KEYWORD1
+StringList	KEYWORD1
 Switch	KEYWORD1
 Temperature	KEYWORD1
+TcpClient	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
@@ -47,17 +52,20 @@ addSeconds	KEYWORD2
 addTone	KEYWORD2
 addYears	KEYWORD2
 altitude	KEYWORD2
+append	KEYWORD2
 array	KEYWORD2
 at	KEYWORD2
 avg KEYWORD2
-backward	KEYWORD2
 beep	KEYWORD2
 begin	KEYWORD2
 blueLed	KEYWORD2
+calibrate	KEYWORD2
 celcius	KEYWORD2
 changed	KEYWORD2
 clear   KEYWORD2
+close	KEYWORD2
 cm	KEYWORD2
+connect	KEYWORD2
 continueRead	KEYWORD2
 count	KEYWORD2
 course	KEYWORD2
@@ -65,20 +73,26 @@ dataReady	KEYWORD2
 day	KEYWORD2
 detected	KEYWORD2
 done	KEYWORD2
+error	KEYWORD2
 fahrenheit	KEYWORD2
-forward	KEYWORD2
+first	KEYWORD2
 get	KEYWORD2
 getIdList	KEYWORD2
 greenLed	KEYWORD2
 go	KEYWORD2
+has	KEYWORD2
 hour	KEYWORD2
 humidity	KEYWORD2
 id	KEYWORD2
 inch	KEYWORD2
 init	KEYWORD2
 insert	KEYWORD2
+insertAt	KEYWORD2
 insertTone	KEYWORD2
+isConnected	KEYWORD2
+isMoving    KEYWORD2
 isOn	KEYWORD2
+isPresent	KEYWORD2
 kelvin	KEYWORD2
 kg  KEYWORD2
 kph	KEYWORD2
@@ -92,28 +106,39 @@ millisTimer	KEYWORD2
 minute	KEYWORD2
 month	KEYWORD2
 move	KEYWORD2
-moving	KEYWORD2
+movesBackward	KEYWORD2
+movesForward	KEYWORD2
 mps	KEYWORD2
 now	KEYWORD2
 object	KEYWORD2
+off	KEYWORD2
+on	KEYWORD2
 onTimerEvent	KEYWORD2
 pascal	KEYWORD2
+pitch	KEYWORD2
 play	KEYWORD2
 pressed	KEYWORD2
 rawValue	KEYWORD2
 read	KEYWORD2
 readValue	KEYWORD2
+receive KEYWORD2
 redLed	KEYWORD2
 released	KEYWORD2
 remove	KEYWORD2
 removeAll	KEYWORD2
 removeAt	KEYWORD2
+removeFirst	KEYWORD2
 replace	KEYWORD2
+replaceAt	KEYWORD2
 reset	KEYWORD2
+roll	KEYWORD2
 rotate	KEYWORD2
 rpm	KEYWORD2
 rps	KEYWORD2
 second	KEYWORD2
+sendPage    KEYWORD2
+sendNumber  KEYWORD2
+sendText    KEYWORD2
 set	KEYWORD2
 setAuthentication	KEYWORD2
 setBaud	KEYWORD2
@@ -121,13 +146,12 @@ setBeeper	KEYWORD2
 setBlink	KEYWORD2
 setBrightness	KEYWORD2
 setColor	KEYWORD2
+setDeclination  KEYWORD2
 setForward	KEYWORD2
 setHold	KEYWORD2
 setInputRange	KEYWORD2
 setInversion	KEYWORD2
 setNormalOpen	KEYWORD2
-setOff	KEYWORD2
-setOn	KEYWORD2
 setOutputRange	KEYWORD2
 setPin	KEYWORD2
 setRelease	KEYWORD2
@@ -139,6 +163,7 @@ setTicksPerRotation	KEYWORD2
 setTimerEvent	KEYWORD2
 setTimeout	KEYWORD2
 size	KEYWORD2
+start	KEYWORD2
 startTimerEvent	KEYWORD2
 stopTimerEvent	KEYWORD2
 swapDirection	KEYWORD2
@@ -151,6 +176,7 @@ value	KEYWORD2
 writeTime	KEYWORD2
 useRtc	KEYWORD2
 writeValue	KEYWORD2
+yaw	KEYWORD2
 year	KEYWORD2
 
 #OneWire
@@ -207,11 +233,6 @@ RED	LITERAL1
 WHITE	LITERAL1
 YELLOW	LITERAL1
 
-ALT_INTENTITY	LITERAL1
-ALT_COLOR	LITERAL1
-ALT_REFINTENSITY	LITERAL1
-ALT_REFCOLOR	LITERAL1
-
 TURN	LITERAL1
 MOVE	LITERAL1
 ROTATE	LITERAL1
@@ -238,10 +259,6 @@ VCC	LITERAL1
 GND	LITERAL1
 
 FULLSPEED	LITERAL1
-
-LOCAL	LITERAL1
-HDMI	LITERAL1
-BLUETOOTH	LITERAL1
 
 WHOLE_NOTE	LITERAL1
 HALF_NOTE	LITERAL1

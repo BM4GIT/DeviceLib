@@ -65,17 +65,17 @@ void Switch::read()
     Sensor::read();
 }
 
-bool Switch::pressed()
+bool Switch::isPressed()
 {
     return m_pressed;
 }
 
-bool Switch::released()
+bool Switch::isReleased()
 {
     return !m_pressed;
 }
 
-bool Switch::changed()
+bool Switch::hasChanged()
 {
     return m_changed;
 }

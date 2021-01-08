@@ -10,72 +10,171 @@
 #ifdef RPI
 
 #include "sound.h"
+#include "SystemCore.h"
+#include <thread>
 
-void Sound::init( Streamer streamer, String device)
+thread g_play;
+bool g_stop;
+int g_volume = LEVEL_3;
+
+LinkedList<String>  g_item; // audio-file or spoken text
+LinkedList<uint8_t> g_type; // 0 = audio-file, 1 = spoken text
+int g_current = -1;
+
+void play_file( String path, uint8_t streamer, String device, bool async)
+{
+    String play;
+    switch ( streamer ) {
+        case LOCAL :        play = "omxplayer -o local --vol "; play += String( g_volume, DEC) + " "; break;
+        case HDMI :         play = "omxplayer -o hdmi --vol "; play += String( g_volume, DEC) + " "; break;
+        case BLUETOOTH :    play = String( "aplay -D bluealsa:HCI=hci0,DEV=") + device + String( ",PROFILE=a2dp "); break;
+    }
+	play += make_linux_path( path);
+    if ( async )
+        system_async( play.c_str());
+    else
+        system( play.c_str());
+}
+
+void play_text( String text, uint8_t  streamer, String device, bool async)
+{
+	String speak = "espeak \"[][][][] ";
+    speak += text;
+    switch ( streamer ) {
+        case LOCAL :
+        case HDMI :         speak += "\" --stdout | aplay"; break;
+        case BLUETOOTH :    speak += String( "\" -a20 -ven+f2 -k5 -s170 --stdout | aplay -D bluealsa:HCI=hci0,DEV=")
+                                        + device + String( ",PROFILE=a2dp");
+    }
+    if ( async )
+        system_async( speak.c_str());
+    else
+        system( speak.c_str());
+}
+
+void play_list( uint8_t streamer, String device)
+{
+    g_stop = false;
+    g_current = -1;
+    while ( g_current < g_item.size() ) {
+        g_current++;
+        if ( g_type[g_current] )
+            play_text( g_item[g_current], streamer, device, false);
+        else {
+            if ( g_stop ) break;
+            play_file( g_item[g_current], streamer, device, false);
+        }
+    }
+}
+
+
+/////////////////
+// CLASS SOUND //
+/////////////////
+
+void Sound::init( uint8_t streamer, String device)
 {
     m_streamer = streamer;
     m_device = device;
 }
 
-uint8_t Sound::add( String sound, bool astext)
+void Sound::setVolume( int milli_db)
 {
-    uint8_t ix = m_item.add( sound);
-    m_type.add( astext);
+   g_volume = milli_db;
+}
+
+uint8_t Sound::addFile( String audio_file)
+{
+    uint8_t ix = g_item.add( audio_file);
+    g_type.add( false);
     return ix;
 }
 
-void Sound::insert( uint8_t pos, String sound, bool astext)
+uint8_t Sound::addText( String text)
 {
-    m_item.insert( pos, sound);
-    m_type.insert( pos, astext);
+    uint8_t ix = g_item.add( text);
+    g_type.add( true);
+    return ix;
+}
+
+void Sound::insertFile( uint8_t pos, String audio_file)
+{
+    g_item.insert( pos, audio_file);
+    g_type.insert( pos, false);
+}
+
+void Sound::insertText( uint8_t pos, String text)
+{
+    g_item.insert( pos, text);
+    g_type.insert( pos, true);
 }
 
 void Sound::remove( uint8_t pos, uint8_t count)
 {
     for ( int i = pos; i < pos + count; i++ ) {
-        m_item.removeAt( i);
-        m_type.removeAt( i);
+        g_item.removeAt( i);
+        g_type.removeAt( i);
     }
 }
 
 void Sound::clear()
 {
-    m_item.removeAll();
-    m_type.removeAll();
+    g_item.removeAll();
+    g_type.removeAll();
 }
 
-void Sound::playList()
+void Sound::playList( bool async)
 {
-    for (int i = 0; i < m_item.size(); i++ )
-        if ( m_type[i] )
-            playText( m_item[i]);
-        else
-            playFile( m_item[i]);
+    g_current = 0;
+    if ( async )
+        g_play = thread( play_list, m_streamer, m_device);
+    else
+        play_list( m_streamer, m_device);
 }
 
-void Sound::playFile( String path)
+void Sound::playNext()
 {
-    String play;
-    switch ( m_streamer ) {
-        case Local :        play = "omxplayer -o local "; break;
-        case HDMI :         play = "omxplayer -o hdmi "; break;
-        case Bluetooth :    play = String( "aplay -D bluealsa:HCI=hci0,DEV=") + m_device + String( ",PROFILE=a2dp "); break;
+    if ( g_current < g_item.size() -1 )
+        stopplaying(); // play_list will play next after stop
+}
+
+void Sound::playCurrent()
+{
+    g_current--;
+    stopplaying(); // play_list will play next after stop
+}
+
+void Sound::playPrevious()
+{
+    if ( g_current > 0 ) {
+        g_current -= 2; // play_list will play next after stop
+        stopplaying();
     }
-	play += path;
-	system( play.c_str());
 }
 
-void Sound::playText( String text)
+void Sound::playFile( String path, bool async)
 {
-	String speak = "espeak \"[][][][] ";
-    speak += text;
-    switch ( m_streamer ) {
-        case Local :
-        case HDMI :         speak += "\" --stdout | aplay"; break;
-        case Bluetooth :    speak += String( "\" -a20 -ven+f2 -k5 -s170 --stdout | aplay -D bluealsa:HCI=hci0,DEV=")
-                                        + m_device + String( ",PROFILE=a2dp");
-    }
-	system( speak.c_str());
+    play_file( path, m_streamer, m_device, async);
+}
+
+void Sound::playText( String text, bool async)
+{
+    play_text( text, m_streamer, m_device, async);
+}
+
+void Sound::stopplaying()
+{
+    int pid = pidof( "omxplayer.bin");
+    String cmd = String( "sudo kill ") + String( pid, DEC);
+    system( cmd.c_str());
+//    kill( pid, SIGKILL);
+}
+
+void Sound::stop()
+{
+    g_stop = true;
+    stopplaying();
+    g_play.join();
 }
 
 #endif

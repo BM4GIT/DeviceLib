@@ -32,8 +32,8 @@ public:
 
     void play();    // plays the tones
 
-    void setOn();   // activates the beeper
-    void setOff();
+    void on();   // activates the beeper
+    void off();
 
 protected:
 

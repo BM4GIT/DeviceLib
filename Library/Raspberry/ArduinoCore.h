@@ -12,7 +12,7 @@
 *  > attachInterrupt / detachInterrupt
 *  > analogRead / analogWrite
 *  > the pwm and threading helper-routines
-* 
+*
 *  Copyright (C) 2012 Libelium Comunicaciones Distribuidas S.L.
 *  http://www.libelium.com
 *
@@ -27,6 +27,8 @@
 #define ARDUINOCORE_H
 
 #include <chrono>
+#include <math.h>
+#include <bcm2835.h>
 #include "linkedlist.h"
 
 extern bool GTK;
@@ -35,27 +37,28 @@ using namespace std;
 
 // ARDUINO CORE
 
+#define F(a) a
+
 #define INPUT		0
 #define OUTPUT		1
 #define INPUT_PULLUP	2
 #define INPUT_PULLDOWN	3
 
-#define LOW 		0
-#define HIGH		1
+// #define LOW 		0	// defined in bcm2835.h
+// #define HIGH		1	// defined in bcm2835.h
 #define RISING		2
 #define FALLING		3
 #define CHANGE		4
 
-extern void delay( uint32_t);
-extern void delayMicroseconds( uint32_t);
+
 extern long millis();
 extern long micros();
-
 extern void pinMode( uint8_t pin, uint8_t mode);
-extern void digitalWrite( uint8_t pin, uint8_t data);
-extern uint8_t digitalRead( uint8_t pin);
+#define digitalWrite( pin, state)	bcm2835_gpio_write( pin, state)
+#define digitalRead( pin)		bcm2835_gpio_lev( pin)
+
 extern void analogWrite( uint8_t pin, uint16_t level);
-// analogRead not defined yet
+//extern int analogRead (int pin);
 
 extern void attachInterrupt( uint8_t pin, void (*func)(), uint mode);
 extern void detachInterrupt( uint8_t pin);
@@ -105,7 +108,7 @@ public:
 	uint availableForWrite();
 
 	void begin( const ulong baud, const uint config = SERIAL_8N1);
-	void end(); 
+	void end();
 
 	bool find( const String search);
 	bool findUntil( const String search, const String stop = "");
@@ -171,60 +174,28 @@ extern ulong diffMicros( hirestime stop, hirestime start);
 #define VALUE_MAX 30
 #define MAXPINS 30
 
-// GPIO
-
-typedef struct tdGpioStatus {
-    int code;
-    String txt;
-}tdGpioStatus;
-
-typedef struct tdGpioPinData {
-    int inUse;
-    int dir;
-    int fd;
-    String path;
-}tdGpioPinData;
-
-class gpio
-{
-public:
-    explicit gpio();
-    ~gpio();
-    int pinMode(uint8_t pin, uint8_t dir);
-    void digitalWrite(uint8_t pin, uint8_t val);
-    uint8_t digitalRead(uint8_t pin);
-    void closeGpio();
-    int openGpio(uint8_t pin);
-    tdGpioStatus status;
-
-private:
-    int Export(uint8_t pin);
-    int Unexport(uint8_t pin);
-    int Direction(uint8_t pin, uint8_t dir);
-    uint8_t Read(uint8_t pin);
-    int Write(uint8_t pin, uint8_t value);
-    tdGpioPinData pindata[MAXPINS];
-};
-
 /////////
 // GTK //
 /////////
 
-#define tLabel	1
-#define tImage	2
-#define tButton	3
-#define tCheck	4
-#define tRadio	5
-#define tEdit	6
+#define LABEL	1
+#define IMAGE	2
+#define BUTTON	3
+#define CHECK	4
+#define RADIO	5
+#define EDIT	6
 
 extern void setTitle( String title);
 extern void setSize( uint16_t width, uint16_t height);
+extern void setPosition( uint16_t x, uint16_t y);
+extern void setFullScreen( bool fullscreen = true);
+extern void setPaperColor( uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha = 255);
 
 extern void* create( uint8_t type, String name);
 extern void* create( uint8_t type, String name, String param);
 extern void appendDefaultStyle( uint8_t type, String style);
 extern void setSize( void* widget, uint16_t width, uint16_t height);
-extern void place( void* widget, uint16_t x, uint16_t y);
+extern void setPosition( void* widget, uint16_t x, uint16_t y);
 extern String name( void* widget);
 extern void destroy( void* widget);
 extern void show( void* widget);
@@ -249,12 +220,21 @@ extern void callOnMouseRClick( CALLBACK routine);
 extern void callOnMouseLRelease( CALLBACK routine);
 extern void callOnMouseRRelease( CALLBACK routine);
 
+void setLineColor( uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha = 255);
+void setFillColor( uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha = 255);
+
+void drawLine( uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_t thickness = 1);
+void drawRectangle( uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t thickness = 1, bool fill = false);
+void drawCircle( uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t thickness = 1, bool fill = false);
+
+void callOnDraw( CALLBACK routine);
+
 uint8_t addStickyArea( uint16_t left, uint16_t top, uint16_t width, uint16_t height);
 void removeStickyArea( uint16_t ix);
 void clearStickyArea();
 
 void addRow( WidgetList* widgets);
-void setRowValues( uint8_t row, StringList &values, uint8_t type = tEdit);
-void getRowValues( uint8_t row, StringList& values, uint8_t type = tEdit);
+void setRowValues( uint8_t row, StringList &values, uint8_t type = EDIT);
+void getRowValues( uint8_t row, StringList& values, uint8_t type = EDIT);
 
 #endif // ARDUINOCORE_H

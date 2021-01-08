@@ -11,7 +11,7 @@
 // 1. Client starts by sending an id-string
 // 2. Server answers with "#START#" or, 
 //    when no id from client received, send "#END#" and quit
-// 3. Data excange
+// 3. Data exchange
 // 4. Client or server ends by sending "#END#"
 
 #include "tcpserver.h"
@@ -26,6 +26,8 @@ const String START = "#START#";
 const String END = "#END#";
 bool g_end = false;
 uint32_t g_timeout = 100;
+
+LinkedList<TcpService*>	g_clients;
 
 ////////////////////
 // ERROR HANDLING //
@@ -47,85 +49,14 @@ String latestError()
     return "";
 }
 
-///////////////
-// MESSAGING //
-///////////////
-
-typedef struct
-{
-    String id;
-    String data;
-} message_t;
-
-LinkedList<message_t*>	g_msg_in;
-LinkedList<message_t*>	g_msg_out;
-
-bool add_send_message( String id, String data)
-{
-    message_t *msg;
-    try {
-    msg = new message_t;
-    }
-    catch ( bad_alloc* e ) {
-    error( String( "Client: ") + id + String( ", Message: ") + data + ".\nRoutine: add_send_message.\nFailed allocate memory for a message to send.\n");
-    return false;
-    }
-    msg->id = id;
-    msg->data = data;
-    g_msg_out.add( msg);
-    return true;
-}
-
-bool add_recv_message( String id, String data)
-{
-    message_t *msg;
-    try {
-    msg = new message_t;
-    }
-    catch ( bad_alloc* e ) {
-    error( String( "Client: ") + id + String( ", Message: ") + data + ".\nRoutine: add_recv_message.\nFailed to allocate memory for a received message.\n");
-    return false;
-    }
-    msg->id = id;
-    msg->data = data;
-    g_msg_in.add( msg);
-    return true;
-}
-
-bool get_send_message( String id, String& data)
-{
-    for ( int i = 0; i < g_msg_out.size(); i++ )
-        if ( g_msg_out.at( i)->id == id ) {
-            data = g_msg_out.at( i)->data;
-            delete g_msg_out.at( i);
-            g_msg_out.removeAt( i);
-            return true;
-        }
-    error( String( "Client: ") + id + ". Routine: get_send_message.\nNo more messages to send.\n");
-    return false;
-}
-
-bool get_recv_message( String id, String& data)
-{
-    for ( int i = 0; i < g_msg_in.size(); i++ )
-        if ( g_msg_in.at( i)->id == id ) {
-            data = g_msg_in.at( i)->data;
-            delete g_msg_in.at( i);
-            g_msg_in.removeAt( i);
-            return true;
-        }
-    error( String( "Client: ") + id + ". Routine: get_recv_message.\nNo more message received.\n");
-    return false;
-}
-
 ///////////////////
 // CLIENT THREAD //
 ///////////////////
 
-bool readFromClient( int fd, String& data, long timeout)
+bool readFromClient( int fd, String& data)
 {
     char buffer[256];
-    long tm = millis() + timeout;
+    long tm = millis() + g_timeout;
     while ( tm > millis() ) {
         bzero( buffer, 256);
         int n = sckt::read( fd, buffer, 255);
@@ -145,42 +76,6 @@ bool sendToClient( int fd, String data)
     return ( n >= 0 );
 }
 
-typedef struct
-{
-    String id;
-    int	   fd;
-} client_t;
-
-LinkedList<client_t*>	g_clients;
-
-void deleteClient( String client)
-{
-    message_t* msg;
-    client_t* cli;
-    int i;
-    for ( i = 0; i < g_msg_in.size(); i++ ) {
-        msg = g_msg_in.at( i);
-        if ( msg->id == client ) {
-            delete msg;
-            g_msg_in.removeAt( i);
-        }
-    }
-    for ( i = 0; i < g_msg_out.size(); i++ ) {
-        msg = g_msg_out.at( i);
-        if ( msg->id == client ) {
-            delete msg;
-            g_msg_out.removeAt( i);
-        }
-    }
-    for ( i = 0; i < g_clients.size(); i++ ) {
-        cli = g_clients.at( i);
-        if ( cli->id == client ) {
-            delete cli;
-            g_clients.removeAt( i);
-        }
-    }
-}
-
 void* clientThread( void* socket)
 {
     int lsocket = *((int*)socket);
@@ -188,8 +83,9 @@ void* clientThread( void* socket)
     int lclient;
 
     while ( !g_end ) {
-
+	//
         // accept new client if available
+	//
         struct sckt::sockaddr_in cli_addr;
         sckt::socklen_t clilen;
         clilen = sizeof( cli_addr);
@@ -197,7 +93,6 @@ void* clientThread( void* socket)
         lclient = sckt::accept( lsocket, (struct sckt::sockaddr*) &cli_addr, &clilen);
 
         if ( lclient >= 0 ) {
-
             // set lclient to non-blocking mode
             int on = 1;
             if ( ioctl( lclient, FIONBIO, (char*) &on) < 0 ) {
@@ -207,7 +102,7 @@ void* clientThread( void* socket)
             }
 
             // wait for client name
-            if ( !readFromClient( lclient, sclient, g_timeout) ) {
+            if ( !readFromClient( lclient, sclient) ) {
                 sendToClient( lclient, END);
                 sckt::close( lclient);
                 error( "Routine: clientThread.\nFailed to receive client id.\n");
@@ -215,25 +110,23 @@ void* clientThread( void* socket)
             }
 
 	    // if client reconnects, first delete old connection
-	    int i;
-	    for ( i = 0; i < g_clients.size(); i++ )
-		if ( g_clients.at( i)->id == sclient ) {
-		    deleteClient( sclient);
+	    for ( int i = 0; i < g_clients.size(); i++ ) {
+		TcpService* cli = g_clients.at( i);
+		if ( cli->client() == sclient ) {
+		    g_clients.removeAt( i);
+		    delete cli;
 		    break;
 		}
+	    }
 
 	    // add client to the list
-	    client_t *cli;
-	    try {
-	    cli = new client_t;
+	    TcpService *cli = new TcpService( lclient);
+	    if ( !cli ) {
+		sckt::close( lclient);
+		error( "Routine: clientThread.\nFailed to allocate memory for new client.\n");
+		continue;
 	    }
-	    catch ( bad_alloc* e ) {
-	    sckt::close( lclient);
-	    error( "Routine: clientThread.\nFailed to allocate memory for new client.\n");
-	    continue;
-	    }
-	    cli->id = sclient;
-	    cli->fd = lclient;
+	    cli->setClient( sclient);
 	    g_clients.add( cli);
 
             // send acknowledge
@@ -241,62 +134,140 @@ void* clientThread( void* socket)
                 error( "Routine: clientThread.\nFailed to send acknowledge to client.\n");
         }
 
-        // handle data exchange
-        int ix = 0;
-        while ( ix < g_clients.size() ) {
-
-            // send pending outgoing data
-            if ( get_send_message( g_clients.at( ix)->id, data) ) {
-               if ( data == END ) {
-                    sckt::close( g_clients.at( ix)->fd);
-                    deleteClient( g_clients.at( ix)->id);
-                    break;
-                }
-                else {
-                    if ( !sendToClient( g_clients.at( ix)->fd, data) )
-                        error( "Routine: clientThread.\nFailed to send data to client.\n");
-                }
-
-            }
-            else
-                error( "Routine: clientThread.\nFailed to retrieve data from send-list.\n");
-
-            // receive pending incoming data
-            if ( readFromClient( g_clients.at( ix)->fd, data, g_timeout) ) {
-                if ( data == END ) {
-                    sckt::close( g_clients.at( ix)->fd);
-                    deleteClient( g_clients.at( ix)->id);
-                    break;
-                }
-                else {
-                    if ( !add_recv_message( g_clients.at( ix)->id, data) )
-                        error( "Routine: clientThread.\nFailed to add data to received-list.\n");
-                }
-            }
-            else
-                error( "Routine: clientThread.\nFailed to receive data from client.\n");
-
-            ix++;
+	//
+        // handle incoming data and requested service termination
+	//
+        for ( int i = g_clients.size() - 1; i >= 0; i-- ) {
+	    TcpService *cli = g_clients.at( i);
+	    if ( cli->mustDelete() && !cli->onList() ) {
+		g_clients.removeAt( i);
+		delete cli;
+	    }
+	    else
+            if ( !cli->read() ) {
+		// service received close request
+		Serial.println( String( "Service '") + cli->client() + "' stopped.");
+		cli->markDelete();
+	    }
         }
     }
 
     // close all clients
     for ( int i = g_clients.size() - 1; i >= 0; i-- ) {
-        sendToClient( g_clients.at( i)->fd, END);
-        sckt::close( g_clients.at( i)->fd);
-        deleteClient( g_clients.at( i)->id);
+	TcpService *cli = g_clients.at( i);
+	cli->close();
+        delete cli;
+	delay( 10);
     }
-    // although all messages should have been deleted, just in case ...
-    for ( int i = 0; i < g_msg_in.size(); i++ ) {
-        delete g_msg_in.at( i);
-        g_msg_in.removeAt( i);
-    }
-    for ( int i = 0; i < g_msg_out.size(); i++ ) {
-        delete g_msg_out.at( i);
-        g_msg_out.removeAt( i);
-    }
+    g_clients.removeAll();
 
     pthread_exit( 0);             
+}
+
+////////////////
+// TCPSERVICE //
+////////////////
+
+TcpService::TcpService( int stream)
+{
+    m_stream = stream;
+    m_status = 0;
+    m_lists  = 0;
+    m_delete = false;
+}
+
+void TcpService::setClient( String client)
+{
+    m_client = client;
+}
+
+void TcpService::setStatus( uint8_t status)
+{
+    m_status = status;
+}
+
+void TcpService::setInfo( String info)
+{
+    m_info = info;
+}
+
+String TcpService::client()
+{
+    return m_client;
+}
+
+uint8_t TcpService::status()
+{
+    return m_status;
+}
+
+String TcpService::info()
+{
+    return m_info;
+}
+
+void TcpService::send( String data)
+{
+    sendToClient( m_stream, data);
+}
+
+String TcpService::receive()
+{
+    if ( m_data.size() <= 0 ) return "";
+    String data = m_data.at( 0);
+    m_data.removeAt( 0);
+    return data;
+}
+
+bool TcpService::read()
+{
+    String data;
+    if ( readFromClient( m_stream, data) ) {
+	if ( data == END ) {
+	    sckt::close( m_stream);
+	    return false;
+	}
+	else
+	    m_data.add( data);
+    }
+    return true;
+}
+
+bool TcpService::dataReady()
+{
+    return (m_data.size() > 0);
+}
+
+void TcpService::close()
+{
+    sendToClient( m_stream, END);
+    sckt::close( m_stream);
+}
+
+void TcpService::registerList()
+{
+    m_lists++;
+}
+
+void TcpService::releaseList()
+{
+    m_lists--;
+    if ( m_lists < 0 ) m_lists = 0;
+}
+
+bool TcpService::onList()
+{
+    return (m_lists > 0);
+}
+
+void TcpService::markDelete()
+{
+    m_delete = true;
+}
+
+bool TcpService::mustDelete()
+{
+    return m_delete;
 }
 
 ///////////////
@@ -356,94 +327,177 @@ bool TcpServer::connect( uint16_t port)
     return true;
 }
 
-bool TcpServer::connected()
+bool TcpServer::isConnected()
 {
     return (m_socket >= 0);
 }
 
 void TcpServer::close()
 {
-    g_end = true;
-    while ( g_clients.size() ) ; // wait until all client threads stopped
+    g_end = true; // this causes the clientThread to stop all services
+    while ( g_clients.size() ) ; // wait until all services stopped
     sckt::close( m_socket);
     m_socket = -1;
 }
 
-void TcpServer::getClients( StringList& list)
+uint8_t	TcpServer::serviceCount()
+{
+    return g_clients.size();
+}
+
+TcpService* TcpServer::service( uint8_t index)
+{
+    if ( index < g_clients.size() )
+	return g_clients.at( index);
+    return NULL;
+}
+
+TcpService* TcpServer::service( String service)
 {
     for ( int i = 0; i < g_clients.size(); i++ ) {
-	int j;
-        for ( j = 0; j < list.size(); j++ ) {
-            if ( list.at( j) == g_clients.at( i)->id )
-                break;
-        }
-        if ( j >= list.size() )
-            list.add( g_clients.at( i)->id);
+	if ( g_clients.at( i)->client() == service )
+	    return g_clients.at( i);
     }
+    return NULL;
 }
 
-bool TcpServer::hasClient( String client)
+//////////////////////////////////////////////
+// NEVER DELETE SERVICES FROM A SERVICELIST //
+// SERVICE DELETION IS AN AUTOMATIC PROCESS //
+//////////////////////////////////////////////
+
+
+bool TcpServer::exists( ServiceList& list, String service)
 {
-    for ( int i = 0; i < g_clients.size(); i++ )
-	if ( client == g_clients.at( i)->id )
+    for ( int i = 0; i < list.size(); i++ ) {
+	TcpService* cli = list.at( i);
+	if ( (cli->client() == service) && !cli->mustDelete() )
 	    return true;
+    }
     return false;
 }
 
-void TcpServer::stopClient( String client)
+void TcpServer::remove( ServiceList& list, String service)
+{
+    for ( int i = list.size() - 1; i >= 0; i-- ) {
+	TcpService* cli = list.at( i);
+	if ( cli->client() == service ) {
+	    list.removeAt( i);
+	    cli->releaseList();
+	}
+    }
+}
+
+void TcpServer::allServices( ServiceList& list)
+{
+    clearServiceList( list);
+    for ( int i = 0; i < g_clients.size(); i++ ) {
+	TcpService* cli = list.at( i);
+	if ( !cli->mustDelete() ) {
+	    cli->registerList();
+	    list.add( cli);
+	}
+    }
+}
+
+void TcpServer::servicesAppendStatus( ServiceList& list, uint8_t status)
 {
     for ( int i = 0; i < g_clients.size(); i++ ) {
-        if ( g_clients.at( i)->id == client ) {
-            if ( !add_send_message( client, END) )
-                error( "Routine: stopClient.\nFailed to send end-command to client.\n");
-            break;
-        }
+	TcpService* cli = g_clients.at( i);
+	if ( (cli->status() == status) && !cli->mustDelete() ) {
+	    cli->registerList();
+	    list.add( cli);
+	}
     }
 }
 
-bool TcpServer::dataReady()
+void TcpServer::servicesAppendInfo( ServiceList& list, String info)
 {
-    if ( g_msg_in.size() )
-	    return true;
-    return false;
-}
-
-bool TcpServer::dataReady( String client)
-{
-    for ( int i = 0; i < g_msg_in.size(); i++ )
-	if ( g_msg_in.at( i)->id == client )
-	    return true;
-    return false;
-}
-
-String TcpServer::client()
-{
-    if ( g_msg_in.size() )
-	return g_msg_in.at( 0)->id;
-    return "";
-}
-
-bool TcpServer::read( String client, String& data)
-{
-    if ( !get_recv_message( client, data) ) {
-        error( "Routine: read.\nFailed to retrieve data from the receive-list.\n");
-        return false;
+    for ( int i = 0; i < g_clients.size(); i++ ) {
+	TcpService* cli = g_clients.at( i);
+	if ( (cli->info() == info) && !cli->mustDelete() ) {
+	    cli->registerList();
+	    list.add( cli);
+	}
     }
-    return true;
 }
 
-bool TcpServer::send( String client, String data)
+void TcpServer::servicesRemoveStatus( ServiceList& list, uint8_t status)
 {
-    if ( !add_send_message( client, data) ) {
-        error( "Routine: send.\nFailed to add data to the send-list.\n");
-        return false;
+    for ( int i = list.size() - 1; i >= 0; i-- ) {
+	TcpService* cli = list.at( i);
+	if ( cli->status() == status ) {
+	    list.removeAt( i);
+	    cli->releaseList();
+	}
     }
-    return true;
+}
+
+void TcpServer::servicesRemoveInfo( ServiceList& list, String info)
+{
+    for ( int i = list.size() - 1; i >= 0; i-- ) {
+	TcpService* cli = list.at( i);
+	if ( cli->info() == info ) {
+	    list.removeAt( i);
+	    cli->releaseList();
+	}
+    }
+}
+
+uint8_t TcpServer::servicesHaveStatus( ServiceList& list, uint8_t status)
+{
+    uint8_t cnt = 0;
+    for ( int i = 0; i < list.size(); i++ ) {
+	TcpService* cli = list.at( i);
+	if ( (cli->status() == status) && !cli->mustDelete() )
+	    cnt++;
+    }
+    return cnt;
+}
+
+uint8_t TcpServer::servicesHaveInfo( ServiceList& list, String info)
+{
+    uint8_t cnt = 0;
+    for ( int i = 0; i < list.size(); i++ ) {
+	TcpService* cli = list.at( i);
+	if ( (cli->info() == info) && !cli->mustDelete() )
+	    cnt++;
+    }
+    return cnt;
+}
+
+void TcpServer::servicesSetStatus( ServiceList& list, uint8_t status)
+{
+    for ( int i = 0; i < list.size(); i++ )
+	list.at( i)->setStatus( status);
+}
+
+void TcpServer::servicesSetInfo( ServiceList& list, String info)
+{
+    for ( int i = 0; i < list.size(); i++ )
+	list.at( i)->setInfo( info);
+}
+
+void TcpServer::servicesSend( ServiceList& list, String data)
+{
+    for ( int i = 0; i < list.size(); i++ ) {
+	TcpService* cli = list.at( i);
+	if ( !cli->mustDelete() )
+	    cli->send( data);
+    }
+}
+
+void TcpServer::clearServiceList( ServiceList& list)
+{
+    for ( int i = list.size() - 1; i >= 0; i-- )
+	list.at( i)->releaseList();
+    list.removeAll();
 }
 
 String TcpServer::latestError()
 {
-    return latestError();
+    if ( !g_error.size() ) return "No errors.";
+    return g_error.at( 0);
 }
 
 StringList* TcpServer::latestErrors()

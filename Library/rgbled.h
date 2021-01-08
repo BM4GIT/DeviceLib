@@ -34,8 +34,8 @@ public:
 
     void setColor( uint8_t color);
     void setColor( uint8_t red, uint8_t green, uint8_t  blue);
-    void setOn();
-    void setOff();
+    void on();
+    void off();
 
     Led* redLed();
     Led* greenLed();

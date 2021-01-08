@@ -17,31 +17,52 @@
 #include "actuator.h"
 #include "linkedlist.h"
 
+// audio devices
+#define LOCAL       0
+#define HDMI        1
+#define BLUETOOTH   2
+
+// volume levels
+#define LEVEL_5     800
+#define LEVEL_4     400
+#define LEVEL_3     -100
+#define LEVEL_2     -700
+#define LEVEL_1     -1400
+
 class Sound : public Actuator
 {
 public:
-    enum Streamer { Local, HDMI, Bluetooth };
 
-    Sound() { m_streamer = Local; };
+    Sound() { m_streamer = LOCAL; m_stop = false; };
     ~Sound() {};
 
-    void init( Streamer streamer, String device = "");
+    void init( uint8_t streamer, String device = "");
 
-    uint8_t add( String sound, bool astext = false);
-    void insert( uint8_t pos, String sound, bool astext = false);
+    void setVolume( int milli_db);
+
+    uint8_t addFile( String audio_file);
+    uint8_t addText( String text);
+    void insertFile( uint8_t pos, String audio_file);
+    void insertText( uint8_t pos, String text);
     void remove( uint8_t pos, uint8_t count = 1);
     void clear();
 
-    void playList();                // plays the list
-    void playFile( String path);    // calls 'aplay' to play the file
-    void playText( String text);    // calls 'espeak' to say the text
+    void playList( bool async = true);                  // plays the list
+    void playNext();
+    void playCurrent(); // (means restart current)
+    void playPrevious();
+
+    void playFile( String path, bool async = false);    // calls 'omxplayer' or 'aplay' to play the file
+    void playText( String text, bool async = false);    // calls 'espeak' to say the text
+    void stop();
 
 protected:
 
-    LinkedList<String>  m_item; // audio-file or spoken text
-    LinkedList<uint8_t> m_type; // 0 = audio-file, 1 = spoken text
-    Streamer    m_streamer;
+    void stopplaying();
+
+    uint8_t     m_streamer;
     String      m_device;
+    bool        m_stop;
 };
 
 #endif // RPI

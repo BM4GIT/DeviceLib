@@ -10,7 +10,8 @@
 #ifndef DEVICE_H
 #define DEVICE_H
 
-#include "Arduino.h"
+#include "ArduinoCore.h"
+#include "ArduinoString.h"
 #include "linkedlist.h"
 #ifdef RPI
 #include <thread>

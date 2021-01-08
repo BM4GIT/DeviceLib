@@ -43,7 +43,7 @@ public:
     void rotate( uint32_t degr, uint8_t speed = 100);
     void move( uint32_t msec, uint8_t = 100);
     void go( uint8_t speed = 100);
-    void setOff();
+    void off();
 
 #ifdef RPI
     void start( uint8_t command, uint32_t param, uint8_t speed = 100);
@@ -53,7 +53,7 @@ public:
 private:
 
     void stepBiPolar();
-    void off();
+    void turnoff();
 
     int8_t   m_pin1;
     int8_t   m_pin2;

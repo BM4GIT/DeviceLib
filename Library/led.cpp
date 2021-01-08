@@ -67,7 +67,7 @@ Led::Led()
 
 Led::~Led()
 {
-    setOff();
+    off();
 }
 
 void Led::setPin( uint8_t pin, bool pwm)
@@ -82,32 +82,32 @@ void Led::setInversion( bool invert)
     m_invert = invert;
 }
 
-void Led::setBrightness( uint8_t on, uint8_t off)
+void Led::setBrightness( uint8_t bright_on, uint8_t bright_off)
 {
-    if ( on >= BRIGHT )
+    if ( bright_on >= BRIGHT )
         m_max = PINBRIGHT;
     else
-        m_max = on * PINBRIGHT / BRIGHT;
-    if ( off >= BRIGHT )
+        m_max = bright_on * PINBRIGHT / BRIGHT;
+    if ( bright_off >= BRIGHT )
         m_min = PINBRIGHT;
     else
-        m_min = off * PINBRIGHT / BRIGHT;
+        m_min = bright_off * PINBRIGHT / BRIGHT;
     if ( m_ison )
-        setOn();
+        on();
 }
 
-void Led::setBlink( uint32_t on, uint32_t off)
+void Led::setBlink( uint32_t blink_on, uint32_t blink_off)
 {
-    m_ton = on;
-    m_toff = off;
+    m_ton = blink_on;
+    m_toff = blink_off;
     if ( m_ison )
-        setOn();
+        on();
 }
 
-void Led::setOn()
+void Led::on()
 {
     if ( m_pin < 0 ) return;
-    Actuator::setOn();
+    Actuator::on();
     if ( m_pwm ) {
         analogWrite( m_pin, m_invert ? PINBRIGHT - m_max : m_max);
     }
@@ -130,10 +130,10 @@ void Led::setOn()
     }
 }
 
-void Led::setOff()
+void Led::off()
 {
     if ( m_pin < 0 ) return;
-    Actuator::setOff();
+    Actuator::off();
     m_isblinking = false;
     stopTimerEvent();
 

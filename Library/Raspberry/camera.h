@@ -106,8 +106,7 @@ protected:
     int             m_dy; // block height
     uint8_t         m_th; // color treshold
 
-//    QBitArray       m_map;  // b/w representation of an image
-    LinkedList<PNT> m_spot; // spot point list in m_map
+//    LinkedList<PNT> m_spot; // spot point list in m_map
     int             m_minsz; // minimal spot size in pixels
     int             m_cursz; // current spot size in pixels
 

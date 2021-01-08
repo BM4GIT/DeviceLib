@@ -39,6 +39,11 @@ bool SqlClient::connect( const String host, const String database, const String 
 	return (m == msql);
 }
 
+bool SqlClient::isConnected()
+{
+	return (msql != NULL);
+}
+
 void SqlClient::close()
 {
 	if ( msql )
@@ -88,7 +93,7 @@ void SqlClient::columnHeaders( StringList& header)
 		header.add( String( fields[i].name));
 }
 
-String SqlClient::filloutQuery( const String querystr, StringList &values)
+String SqlClient::filloutQuery( const String querystr, StringList values)
 {
     int ix;
     String repl, ret;

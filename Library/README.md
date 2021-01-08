@@ -1,42 +1,29 @@
-# DeviceLib voor Arduino
+# De library
 
-Kopieer alle bestanden uit deze folder en de Arduino-folder naar
-de map Documente\Arduino\libraries\DeviceLib op een lokale computer.
-De Arduino-IDE zal de classes van DeviceLib automatisch herkennen.
+In deze folder bevinden zich de code-bestanden van de library.
+Een aantal bestanden zijn specifiek voor de arduino en aantal zijn
+alleen voor de Raspberry. Hoewel het mogelijk is de bestanden uit deze
+folder te downloaden en alle voorbereiding verder handmatig te doen
+(dit wordt beschreven in de handleiding), is het aan te raden de
+gecomprimeerde library in de folder 'Installeren' te gebruiken.
 
-# DeviceLib voor de Raspberry
+#Raspberry of Arduino
 
-Voor de Raspberry bestaan er twee versies van DeviceLib.
-De ene werkt op de standaard linux-manier via het bestandsysteem.
-De andere werkt met de bcm2835-library.
+In pricipe zijn de programma's voor de raspberry en de arduino uitwisselbaar,
+maar er gelden enkele restricties. Op de raspberry draait een besturings-
+systeem en op de arduino niet. Dit levert enkele kenmerkende verschillen op.
+De library-versie voor de raspberry bevat een scherm-module om vensters
+te maken en muis-klikken af te handelen. Dit is op de arduino niet mogelijk.
+Verder is de module van de tcp-server alleen voor de raspberry gemaakt,
+waarbij de werkelijke communicatie met de client aan het besturingssysteem
+wordt overgelaten. Daarentegen staat het wifi-shield van de arduino maar één
+connectie met een client toe, wat teveel van de raspberry-opzet afwijkt en
+daarom niet in de library is opgenomen.
 
-Standaard linux
----------------
-Kopieer alle bestanden uit deze folder en de "Raspberry/FileSysteem"-folder naar
-de map "/home/pi/DeviceLib" op de Raspberry. Ga in de commando-shell naar deze
-map en start "./buildLib.sh". Kopieer het bestand "libDeviceLib.so" naar de map
-"/usr/lib/" en alle header files naar de map "/usr/include/DeviceLib/".
-Start tenslotte het shell-commando "ldconfig".
-
-Wanneer nu een programma met DeviceLib wordt gebouwd, heeft het geen extra
-rechten nodig. Daardoor kan het eventueel remote worden gestart
-(als bijv. een CGI-applicatie).
-
-Via Bcm2835
------------
-Zorg ervoor dan de bcm2835-library op de Raspberry is geïnstalleerd.
-Kopieer alle bestanden uit deze folder en de "Raspberry/Bcm2835"-folder naar
-de map "/home/pi/DeviceLib" op de Raspberry. Ga in de commando-shell naar deze
-map en start "./buildLib.sh". Kopieer het bestand "libDeviceLib.so" naar de map
-"/usr/lib/" en alle header files naar de map "/usr/include/DeviceLib/".
-Start tenslotte het shell-commando "ldconfig".
-
-Wanneer nu een programma met DeviceLib wordt gebouwd, heeft het superuser
-rechten nodig. Start een programma in de commando-shell door er "sudo" voor te
-schrijven. Programma's met de bcm2835-versie van DeviceLib zijn ietsje sneller
-en de class IButton werkt op dit moment alleen in deze versie.
-
-Geen WiringPi
--------------
-Aangezien het onderhoud aan WiringPi is gestaakt voor de open-source community,
-bestaat er geen versie van DeviceLib, die daarop is gebaseerd.
+Behalve deze voordelen heeft een besturingssysteem ook een groot nadeel:
+je kunt er niet real-time mee programmeren. Interrupts van het besturings-
+systeem onderbreken een programma voortdurend. Dit heeft met name gevolgen
+voor de pwm (pulse wide modulation) waarmee de helderheid van leds en de 
+snelheid van motoren wordt geregeld. Omdat de arduino een mooie
+gelijkmatige puls geeft, branden leds daar werkelijk minder fel, terwijl je
+op de raspberry zo nu en dan geknipper waarneemt.
