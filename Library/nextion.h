@@ -9,8 +9,12 @@
 #ifndef NEXTION_H
 #define NEXTION_H
 
+#ifdef RPI
 #include "ArduinoCore.h"
 #include "ArduinoString.h"
+#else
+#include <Arduino.h>
+#endif
 
 class Nextion
 {

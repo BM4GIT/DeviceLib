@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/">
+        <file>file.png</file>
+        <file>export.png</file>
+        <file>panon.png</file>
+        <file>panoff.png</file>
+        <file>flowit.png</file>
+        <file>device.png</file>
+        <file>fistartup.png</file>
+    </qresource>
+</RCC>

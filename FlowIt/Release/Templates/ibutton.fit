@@ -1,0 +1,10 @@
+<template>
+<type>sensor</type>
+<include>ibutton.h</include>
+<class>IButton</class>
+<function>setPin( 10)</function>
+<function>setTimeout( 500)</function>
+<function>read( )</function>
+<function>dataReady( )</function>
+<function>tag( 0)</function>
+</template>

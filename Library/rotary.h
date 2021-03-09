@@ -33,7 +33,7 @@ public:
 
     bool isMoving();
     bool movesForward();
-    bool movewBackward();
+    bool movesBackward();
 
 private:
 

@@ -10,7 +10,11 @@
 #ifndef JSON_H
 #define JSON_H
 
+#ifdef RPI
 #include "ArduinoString.h"
+#else
+#include <Arduino.h>
+#endif
 
 class Json
 {

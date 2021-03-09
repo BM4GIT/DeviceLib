@@ -10,15 +10,15 @@
 #ifndef DEVICE_H
 #define DEVICE_H
 
+#ifdef RPI
 #include "ArduinoCore.h"
 #include "ArduinoString.h"
-#include "linkedlist.h"
-#ifdef RPI
 #include <thread>
 #include <chrono>
 #else
 #include <TimerTwo.h>
 #endif
+#include "linkedlist.h"
 
 using namespace std;
 

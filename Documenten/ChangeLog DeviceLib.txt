@@ -21,9 +21,12 @@ IMPLEMENTATIE
 RELEASES
 ========
 
-##############################
-## GITHUB UPDATE 08-01-2021 ##
-##############################
+12-01-2021 [RPI/ARD] Slordige bugs in Arduino-versie
+----------------------------------------------------
+[device.h]
+[json.h]
+[nextion.h]
+[rotary.h]
 
 05-01-2021 [RPI/DOC] Consequente benaming routines
 --------------------------------------------------

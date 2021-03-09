@@ -1,0 +1,18 @@
+<template>
+<type>sensor</type>
+<include>gps.h</include>
+<class>Gps</class>
+<function>setPin( 10, 11)</function>
+<function>setBaud( 9600)</function>
+<function>setSentences( GPS::GPSGPA)</function>
+<function>read( )</function>
+<function>dataReady( )</function>
+<function>latitude( )</function>
+<function>longitude( )</function>
+<function>altitude( )</function>
+<function>mps( )</function>
+<function>kph( )</function>
+<function>course( )</function>
+<function>timeStamp( )</function>
+<function>message( )</function>
+</template>

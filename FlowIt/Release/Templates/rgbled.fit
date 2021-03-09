@@ -1,0 +1,15 @@
+<template>
+<type>actuator</type>
+<include>rgbled.h</include>
+<class>RgbLed</class>
+<function>setPin( 10, 11, 12, true)</function>
+<function>setColor( White)</function>
+<function>setColor( 100, 100, 100)</function>
+<function>on( )</function>
+<function>off( )</function>
+<function>isOn( )</function>
+<function>setInversion( )</function>
+<function>redLed( )</function>
+<function>greenLed( )</function>
+<function>blueLed( )</function>
+</template>
