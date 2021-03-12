@@ -28,9 +28,6 @@
   <property name="windowTitle">
    <string/>
   </property>
-  <property name="modal">
-   <bool>false</bool>
-  </property>
   <widget class="QPushButton" name="pbDo">
    <property name="geometry">
     <rect>
@@ -49,7 +46,7 @@
     <rect>
      <x>10</x>
      <y>100</y>
-     <width>51</width>
+     <width>61</width>
      <height>16</height>
     </rect>
    </property>
@@ -75,7 +72,7 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>151</width>
+     <width>191</width>
      <height>17</height>
     </rect>
    </property>
@@ -88,7 +85,7 @@
     <rect>
      <x>400</x>
      <y>10</y>
-     <width>131</width>
+     <width>171</width>
      <height>17</height>
     </rect>
    </property>
@@ -101,7 +98,7 @@
     <rect>
      <x>400</x>
      <y>30</y>
-     <width>121</width>
+     <width>171</width>
      <height>17</height>
     </rect>
    </property>
@@ -114,7 +111,7 @@
     <rect>
      <x>400</x>
      <y>130</y>
-     <width>31</width>
+     <width>61</width>
      <height>16</height>
     </rect>
    </property>
@@ -140,7 +137,7 @@
     <rect>
      <x>400</x>
      <y>220</y>
-     <width>51</width>
+     <width>61</width>
      <height>16</height>
     </rect>
    </property>
@@ -153,7 +150,7 @@
     <rect>
      <x>400</x>
      <y>190</y>
-     <width>41</width>
+     <width>61</width>
      <height>16</height>
     </rect>
    </property>
@@ -179,7 +176,7 @@
     <rect>
      <x>400</x>
      <y>160</y>
-     <width>31</width>
+     <width>61</width>
      <height>16</height>
     </rect>
    </property>
@@ -218,7 +215,7 @@
     <rect>
      <x>200</x>
      <y>10</y>
-     <width>161</width>
+     <width>201</width>
      <height>17</height>
     </rect>
    </property>
@@ -231,7 +228,7 @@
     <rect>
      <x>200</x>
      <y>130</y>
-     <width>31</width>
+     <width>61</width>
      <height>16</height>
     </rect>
    </property>
@@ -270,7 +267,7 @@
     <rect>
      <x>10</x>
      <y>30</y>
-     <width>151</width>
+     <width>191</width>
      <height>17</height>
     </rect>
    </property>
@@ -283,7 +280,7 @@
     <rect>
      <x>200</x>
      <y>30</y>
-     <width>151</width>
+     <width>201</width>
      <height>17</height>
     </rect>
    </property>
@@ -296,7 +293,7 @@
     <rect>
      <x>400</x>
      <y>50</y>
-     <width>141</width>
+     <width>171</width>
      <height>17</height>
     </rect>
    </property>
@@ -361,7 +358,7 @@
     <rect>
      <x>200</x>
      <y>100</y>
-     <width>51</width>
+     <width>61</width>
      <height>16</height>
     </rect>
    </property>
@@ -387,7 +384,7 @@
     <rect>
      <x>400</x>
      <y>100</y>
-     <width>51</width>
+     <width>61</width>
      <height>16</height>
     </rect>
    </property>
@@ -425,6 +422,54 @@
     </rect>
    </property>
   </widget>
+  <widget class="QFrame" name="frame">
+   <property name="geometry">
+    <rect>
+     <x>1</x>
+     <y>1</y>
+     <width>580</width>
+     <height>250</height>
+    </rect>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::StyledPanel</enum>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Raised</enum>
+   </property>
+  </widget>
+  <zorder>frame</zorder>
+  <zorder>pbDo</zorder>
+  <zorder>lblRoutine</zorder>
+  <zorder>pbCancel</zorder>
+  <zorder>rbRoutine</zorder>
+  <zorder>rbActuator</zorder>
+  <zorder>rbSensor</zorder>
+  <zorder>lblClass</zorder>
+  <zorder>leDeclare</zorder>
+  <zorder>lblDeclare</zorder>
+  <zorder>lblInclude</zorder>
+  <zorder>leInclude</zorder>
+  <zorder>lblUsing</zorder>
+  <zorder>cbClass</zorder>
+  <zorder>cbUsing</zorder>
+  <zorder>rbVariable</zorder>
+  <zorder>lblType</zorder>
+  <zorder>cbType</zorder>
+  <zorder>line_4</zorder>
+  <zorder>rbRoutineDel</zorder>
+  <zorder>rbVariableDel</zorder>
+  <zorder>rbDeviceDel</zorder>
+  <zorder>line_5</zorder>
+  <zorder>line_6</zorder>
+  <zorder>cbRoutine</zorder>
+  <zorder>cbVariable</zorder>
+  <zorder>lblVariable</zorder>
+  <zorder>cbDevice</zorder>
+  <zorder>lblDevice</zorder>
+  <zorder>leRoutine</zorder>
+  <zorder>leVariable</zorder>
+  <zorder>leDevice</zorder>
  </widget>
  <tabstops>
   <tabstop>rbRoutine</tabstop>

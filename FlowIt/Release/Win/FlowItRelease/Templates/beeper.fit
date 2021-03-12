@@ -1,0 +1,15 @@
+<template>
+<type>actuator</type>
+<include>beeper.h</include>
+<class>Beeper</class>
+<function>setPin( 10)</function>
+<function>setBeeper( 440, 500)</function>
+<function>beep( )</function>
+<function>on( )</function>
+<function>addTone( 440, 500)</function>
+<function>insertTone( 0, 440, 500)</function>
+<function>remove( 0, 1)</function>
+<function>clear( )</function>
+<function>play( )</function>
+<function>off( )</function>
+</template>

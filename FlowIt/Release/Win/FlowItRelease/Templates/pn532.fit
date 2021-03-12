@@ -1,0 +1,17 @@
+<template>
+<type>sensor</type>
+<include>pn532.h</include>
+<using>PN532</using>
+<class>Rfid</class>
+<function>setPin( 10, 0)</function>
+<function>init( )</function>
+<function>setTimeout( 500)</function>
+<function>reset( )</function>
+<function>read( )</function>
+<function>done( )</function>
+<function>dataReady( )</function>
+<function>tag( 0)</function>
+<function>setAuthentication( byte[6])</function>
+<function>readValue( 0, String)</function>
+<function>writeVlalue( 0, "")</function>
+</template>

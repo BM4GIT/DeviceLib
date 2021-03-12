@@ -24,9 +24,9 @@ ObjectWid::~ObjectWid()
     delete ui;
 }
 
-void ObjectWid::init( int y, QString name)
+void ObjectWid::init( QString name)
 {
-    m_ypos = y;
+    m_ypos = 0;
     m_name = name;
 
     switch ( m_fot ) {
@@ -37,7 +37,7 @@ void ObjectWid::init( int y, QString name)
     }
 }
 
-bool ObjectWid::read( QTextStream& in)
+void ObjectWid::read( QTextStream& in)
 {
     QString ln;
     while ( !in.atEnd() ) {
@@ -114,6 +114,7 @@ bool ObjectWid::selected()
 void ObjectWid::setHome( int ypos)
 {
     m_ypos = ypos;
+    move( DRAG_HOME, m_ypos);
 }
 
 void ObjectWid::home()

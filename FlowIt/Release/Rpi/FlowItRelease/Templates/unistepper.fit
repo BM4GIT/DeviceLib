@@ -1,0 +1,20 @@
+<template>
+<type>actuator</type>
+<include>unistepper.h</include>
+<using>UniStepper</using>
+<class>Stepper</class>
+<function>setPin( 10, 11, 12, 13)</function>
+<function>init( 4096)</function>
+<function>turn( 200)</function>
+<function>move( 1000)</function>
+<function>rotate( 360)</function>
+<function>go( 100)</function>
+<function>start( ROTATE, 360)</function>
+<function>isOn( )</function>
+<function>off( )</function>
+<function>setSpeed( 100)</function>
+<function>setForward( )</function>
+<function>setReverse( )</function>
+<function>setHold( )</function>
+<function>setRelease( )</function>
+</template>

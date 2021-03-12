@@ -18,9 +18,9 @@ public:
     explicit ObjectWid( QWidget *parent, int fot = -1);
     ~ObjectWid();
 
-    void init( int y, QString name);
+    void init( QString name);
 
-    bool read( QTextStream& in);
+    void read( QTextStream& in);
     void write( QTextStream& out);
 
     void setDeclaration( QString classname, QString instance, QString include = "");

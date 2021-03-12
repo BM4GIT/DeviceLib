@@ -30,8 +30,14 @@
 
 QString TITLE = "FlowIt 1.0 - ";
 
+
+#ifdef Q_OS_WIN
 #define YOFFS 70
 #define XOFFS 210
+#else // RPI
+#define YOFFS 70
+#define XOFFS 225
+#endif
 
 #define STANDARDOBJECTS 6
 
@@ -42,6 +48,8 @@ int                 g_panChartX = 0;
 int                 g_panChartY = 0;
 int                 g_panCodeX = 0;
 int                 g_panCodeY = 0;
+
+int                 g_scrollOw = 0;
 
 bool                g_dragging = false;
 ObjectWid*          g_owDrag = NULL;
@@ -68,6 +76,7 @@ Template* g_findTemplate( QString include)
         if ( templ->getInclude() == include )
             return templ;
     }
+    return NULL;
 }
 
 void g_parseTag( QString ln, QString& tag, QString& val)
@@ -101,6 +110,8 @@ FlowIt::FlowIt(QWidget *parent) :
     ui(new Ui::FlowIt)
 {
     ui->setupUi(this);
+
+    m_column = NULL;
 
     setLanguage();
 
@@ -220,10 +231,9 @@ bool FlowIt::deleteVariable( QString name)
 
 void FlowIt::createObject( ObjectWid* ow, QString name)
 {
-    ow->init( m_yObj, name);
+    ow->init( name);
     ow->show();
     g_objects.append( ow);
-    listObjects();
 }
 
 bool FlowIt::deleteObject( QString name)
@@ -276,11 +286,16 @@ bool FlowIt::deleteObject( QString name)
 void FlowIt::listObjects()
 {
     m_yObj = YOFFS;
-    for ( int i = 0; i < g_objects.size(); i ++ ) {
-        ObjectWid* ow = g_objects.at( i);
-        ow->move( DRAG_HOME, m_yObj);
-        m_yObj += ow->height() + CONNECT_HEIGHT;
+    for ( int i = 0; i < g_scrollOw; i++ ) {
+        g_objects.at( i)->hide();
     }
+    for ( int i = g_scrollOw; i < g_objects.size(); i ++ ) {
+        ObjectWid* ow = g_objects.at( i);
+        ow->setHome( m_yObj);
+        m_yObj += ow->height() + CONNECT_HEIGHT;
+        ow->show();
+    }
+    repaint();
 }
 
 bool FlowIt::hasInstance( QString name)
@@ -376,6 +391,7 @@ void FlowIt::clear()
     createObject( ow, FO_WAIT);
     ow = new ObjectWid( this, FOT_DO);
     createObject( ow, FO_DO);
+    listObjects();
 
     // read the standard templates
 
@@ -489,10 +505,19 @@ void FlowIt::paintEvent(QPaintEvent *)
     if ( m_savePath.isEmpty() ) {
         QImage img;
         img.load( "fistartup.png");
+        QRect rd = geometry();
+        rd.setHeight( rd.height() - ui->toolBar->height());
+        QRect ri = img.rect();
+        rd.setRect( (rd.width() - ri.width()) / 2,
+                    (rd.height() - ri.height()) / 2 + ui->toolBar->height(),
+                    ri.width(), ri.height());
         QPainter pw( this);
-        pw.drawImage( 120, 120, img);
+        pw.drawImage( rd, img);
         return;
     }
+
+    // when starting an empty project, m_column is NULL
+    if ( !m_column ) return;
 
     // it is advised to use QImage as an intermediate
     // painting device in order to be sure to get identical
@@ -509,7 +534,7 @@ void FlowIt::paintEvent(QPaintEvent *)
     // draw drag circles near the objects in the list
     pi.setPen( Qt::darkGreen);
     int y = YOFFS;
-    for ( int i = 0; i < g_objects.size(); i++ ) {
+    for ( int i = g_scrollOw; i < g_objects.size(); i++ ) {
         int yp = y + g_objects.at( i)->height() / 2;
         pi.drawEllipse( DRAG_HOME + 105, yp - 2, 4, 4);
         y += g_objects.at( i)->height() + CONNECT_HEIGHT;
@@ -574,7 +599,7 @@ void FlowIt::mousePressEvent(QMouseEvent * event)
 
     g_owDrag = NULL;
     g_foDrag = g_fo;
-    for ( int i = 0; i < g_objects.size(); i++ )
+    for ( int i = g_scrollOw; i < g_objects.size(); i++ )
         if ( g_objects.at( i)->inDrag( mouseX, mouseY) ) {
             g_owDrag = g_objects.at( i);
             break;
@@ -884,6 +909,28 @@ void FlowIt::keyPressEvent(QKeyEvent * event)
             deleteTool( g_foTool->name());
         }
     }
+    else
+    if ( event->key() == Qt::Key_Up ) {
+        if ( g_scrollOw < g_objects.size() - 1 )
+            g_scrollOw++;
+        listObjects();
+    }
+    else
+    if ( event->key() == Qt::Key_Down ) {
+        if ( g_scrollOw > 0 )
+            g_scrollOw--;
+        listObjects();
+    }
+    else
+    if ( event->key() == Qt::Key_Home ) {
+        g_scrollOw = 0;
+        listObjects();
+    }
+    else
+    if ( event->key() == Qt::Key_End ) {
+        g_scrollOw = g_objects.size() - 1;
+        listObjects();
+    }
 }
 
 void FlowIt::on_file_triggered()
@@ -986,10 +1033,12 @@ void FlowIt::openProject()
 
         if ( tag == "<template>" ) {
             Template* templ = new Template;
-            if ( templ->read( in) )
+            if ( templ->read( in) ) {
                 g_templates.append( templ);
-            else
+            }
+            else {
                 delete templ;
+            }
             continue;
         }
 
@@ -1005,7 +1054,6 @@ void FlowIt::openProject()
         }
 
         // READ CHART AND CODE
-
         if ( tag == "<column>" ) {
             Column* col = new Column;
             col->setMain( this);
@@ -1015,8 +1063,11 @@ void FlowIt::openProject()
 
     file.close();
 
-    if ( !g_tools.size() )
+    listObjects();
+
+    if ( !g_tools.size() ) {
         newProject();
+    }
     else
         m_column = g_tools.at( 0);
 }

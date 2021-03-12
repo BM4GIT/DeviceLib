@@ -1,0 +1,11 @@
+<template>
+<type>sensor</type>
+<include>hcsr04.h</include>
+<using>HCSR04</using>
+<class>Distance</class>
+<function>setPin( 10, 11)</function>
+<function>read( )</function>
+<function>dataReady( )</function>
+<function>cm( )</function>
+<function>inch( )</function>
+</template>

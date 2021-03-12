@@ -1,0 +1,13 @@
+<template>
+<type>sensor</type>
+<include>ds18.h</include>
+<using>DS18</using>
+<class>Temperature</class>
+<function>setSensor( "28-00000000", 10)</function>
+<function>getIdList( )</function>
+<function>read( )</function>
+<function>dataReady( )</function>
+<function>kelvin( )</function>
+<function>celcius( )</function>
+<function>fahrenheit( )</function>
+</template>

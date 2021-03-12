@@ -1,0 +1,10 @@
+<template>
+<type>sensor</type>
+<include>hcsr501.h</include>
+<using>HCSR501</using>
+<class>Motion</class>
+<function>setPin( 10)</function>
+<function>read( )</function>
+<function>dataReady( )</function>
+<function>hasDetected( )</function>
+</template>

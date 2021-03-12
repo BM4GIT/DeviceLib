@@ -1,0 +1,15 @@
+<template>
+<type>sensor</type>
+<include>camera.h</include>
+<class>Camera</class>
+<function>init( 800, 600)</function>
+<function>setAnalyse( 5, 25)</function>
+<function>start( )</function>
+<function>read( )</function>
+<function>stop( )</function>
+<function>setReferenceColor( byte[3])</function>
+<function>percentageChanged( ALT_COLOR)</function>
+<function>image( )</function>
+<function>width( )</function>
+<function>height( )</function>
+</template>

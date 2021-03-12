@@ -195,6 +195,7 @@ void DeviceDlg::on_pbDo_clicked()
             m_fi->createObject( ow, name);
         }
         ow->setDeclaration( clss, vnam, incl);
+        m_fi->listObjects();
 
         accept();
     }

@@ -27,6 +27,7 @@ extern ObjectWid*   g_owDrag;   // != NULL causes highlighting of connect circle
 extern FlowObject*  g_foDrag;   // != NULL causes highlighting of connect circles
 extern FlowObject*  g_fo;       // remembers the flowobject which is dragged
 extern int          g_dotType;  // connection circle type
+extern int          g_panOwY;   // vertical pan of the declaration window
 
 extern QList<Column*> g_tools;    // root flowobject has the name of the tool
 extern FlowObject*    g_foTool;   // root flowobject of the current tool
@@ -35,7 +36,6 @@ extern QList<TVariable*>    g_variables;
 extern QList<Template*>     g_templates;
 extern QList<Template*>     g_libraries;
 extern QList<ObjectWid*>    g_objects;
-
 
 extern QString g_tabs;
 extern FlowPage* g_rootPage;

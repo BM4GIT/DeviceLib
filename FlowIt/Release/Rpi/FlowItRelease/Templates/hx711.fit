@@ -1,0 +1,10 @@
+<template>
+<type>sensor</type>
+<include>hx711.h</include>
+<using>HX711</using>
+<class>Scale</class>
+<function>setPin( 10, 11)</function>
+<function>read( )</function>
+<function>dataReady( )</function>
+<function>kg( )</function>
+</template>

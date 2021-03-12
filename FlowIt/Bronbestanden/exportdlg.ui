@@ -40,7 +40,7 @@
     <rect>
      <x>10</x>
      <y>170</y>
-     <width>111</width>
+     <width>361</width>
      <height>17</height>
     </rect>
    </property>
@@ -53,7 +53,7 @@
     <rect>
      <x>10</x>
      <y>0</y>
-     <width>141</width>
+     <width>361</width>
      <height>31</height>
     </rect>
    </property>
@@ -73,7 +73,7 @@
     <rect>
      <x>10</x>
      <y>40</y>
-     <width>221</width>
+     <width>361</width>
      <height>17</height>
     </rect>
    </property>
@@ -86,7 +86,7 @@
     <rect>
      <x>10</x>
      <y>60</y>
-     <width>231</width>
+     <width>361</width>
      <height>17</height>
     </rect>
    </property>
@@ -122,7 +122,7 @@
     <rect>
      <x>10</x>
      <y>80</y>
-     <width>201</width>
+     <width>361</width>
      <height>17</height>
     </rect>
    </property>
@@ -135,7 +135,7 @@
     <rect>
      <x>30</x>
      <y>110</y>
-     <width>61</width>
+     <width>341</width>
      <height>16</height>
     </rect>
    </property>
@@ -148,7 +148,7 @@
     <rect>
      <x>30</x>
      <y>200</y>
-     <width>41</width>
+     <width>341</width>
      <height>16</height>
     </rect>
    </property>
@@ -182,6 +182,35 @@
     <string>Doen</string>
    </property>
   </widget>
+  <widget class="QFrame" name="frame">
+   <property name="geometry">
+    <rect>
+     <x>1</x>
+     <y>1</y>
+     <width>380</width>
+     <height>290</height>
+    </rect>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::StyledPanel</enum>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Raised</enum>
+   </property>
+  </widget>
+  <zorder>frame</zorder>
+  <zorder>cbPrint</zorder>
+  <zorder>rbPrint</zorder>
+  <zorder>lblTitle</zorder>
+  <zorder>rbArduino</zorder>
+  <zorder>rbRaspberry</zorder>
+  <zorder>leFile</zorder>
+  <zorder>pbFile</zorder>
+  <zorder>rbImage</zorder>
+  <zorder>lblFile</zorder>
+  <zorder>lblPrint</zorder>
+  <zorder>pbCancel</zorder>
+  <zorder>pbOk</zorder>
  </widget>
  <tabstops>
   <tabstop>rbArduino</tabstop>

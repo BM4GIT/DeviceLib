@@ -1,0 +1,9 @@
+<template>
+<type>actuator</type>
+<include>buzzer.h</include>
+<class>Buzzer</class>
+<function>setPin( 10)</function>
+<function>on( )</function>
+<function>off( )</function>
+<function>inOn( )</function>
+</template>
