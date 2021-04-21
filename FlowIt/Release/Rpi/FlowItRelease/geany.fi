@@ -1,0 +1,50 @@
+[editor]
+line_wrapping=false
+line_break_column=72
+auto_continue_multiline=true
+
+[file_prefs]
+final_new_line=true
+ensure_convert_new_lines=false
+strip_trailing_spaces=false
+replace_tabs=false
+
+[indentation]
+indent_width=4
+indent_type=0
+indent_hard_tab_width=8
+detect_indent=true
+detect_indent_width=true
+indent_mode=2
+
+[project]
+name=#F#
+base_path=#P#
+description=
+file_patterns=
+
+[long line marker]
+long_line_behaviour=1
+long_line_column=72
+
+[files]
+current_page=0
+FILE_NAME_0=119;C++;0;EUTF-8;1;1;0;#P#/#F#.cpp;0;4
+
+[VTE]
+last_dir=/home/pi
+
+[build-menu]
+C++FT_01_LB=_Build
+C++FT_01_CM=g++ -Wall #F#.o -o #F# -lDeviceLib -lmysqlclient -lpthread `pkg-config --cflags --libs opencv` `pkg-config --libs gtk+-3.0`
+C++FT_01_WD=
+filetypes=C++;
+EX_00_LB=_Execute
+EX_00_CM=clear; ./#F#
+EX_00_WD=
+C++FT_02_LB=_Lint
+C++FT_02_CM=cppcheck --language=c++ --enable=warning,style --template=gcc "%f"
+C++FT_02_WD=
+C++FT_00_LB=_Compile
+C++FT_00_CM=g++ -Wall -D RPI `pkg-config --cflags gtk+-3.0` -I/usr/include/DeviceLib -c "%f" -o "%e.o"
+C++FT_00_WD=

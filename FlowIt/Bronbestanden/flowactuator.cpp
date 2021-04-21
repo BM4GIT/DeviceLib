@@ -11,7 +11,9 @@ FlowActuator::FlowActuator( void* column) :
 void FlowActuator::init( QString name, QString instance, Template* templ)
 {
     m_name = name;
-    m_inst = instance;
+    // class: use the instance itself
+    // module: use the name as alias for the instance
+    m_inst = (instance.isEmpty() ? name : instance);
     m_templ = templ;
 }
 

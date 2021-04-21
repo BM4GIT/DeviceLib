@@ -11,7 +11,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = FlowIt
 TEMPLATE = app
-DESTDIR = ../../FlowItRelease/
+DESTDIR = ../FlowIt Release/
 
 
 SOURCES += main.cpp\

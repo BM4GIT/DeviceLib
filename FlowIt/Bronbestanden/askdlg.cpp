@@ -24,17 +24,17 @@ void AskDlg::setLabel( QString label)
     ui->lblNum->setText( label);
 }
 
-void AskDlg::setValue( int value)
+void AskDlg::setValue( QString value)
 {
-    ui->sbNum->setValue( value);
+    ui->leNum->setText( value);
 }
 
-int AskDlg::value()
+QString AskDlg::value()
 {
     if ( m_valid )
-        return ui->sbNum->value();
+        return ui->leNum->text();
     else
-        return -1;
+        return "";
 }
 
 void AskDlg::on_pbVal_clicked()

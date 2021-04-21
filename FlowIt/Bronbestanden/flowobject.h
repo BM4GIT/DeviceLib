@@ -5,16 +5,19 @@
 #include <QTextStream>
 #include <QAction>
 
-#define FOT_ROUTINE     0
-#define FOT_END         1
-#define FOT_CHECK       2
-#define FOT_WHILE       3
-#define FOT_REPEAT      4
-#define FOT_WAIT        5
-#define FOT_DO          6
-#define FOT_ACTUATOR    7
-#define FOT_SENSOR      8
-#define FOT_PAGE        9
+#define FOT_PAGE        0
+#define FOT_ROUTINE     1
+#define FOT_END         2
+#define FOT_CHECK       3
+#define FOT_WHILE       4
+#define FOT_UNTIL       5
+#define FOT_REPEAT      6
+#define FOT_WAIT        7
+#define FOT_DO          8
+#define FOT_ACTUATOR    9
+#define FOT_SENSOR      10
+#define FOT_STORAGE     11
+#define FOT_INTERFACE   12
 
 extern int mouseX;
 extern int mouseY;
@@ -56,7 +59,7 @@ public:
     virtual void drawCode( QPainter& p, int lineheight, int x, int& y);
     virtual void exportCode( QTextStream& out);
 
-    bool inObject( int x, int y);
+    virtual bool inObject( int x, int y);
     virtual bool inConnect( int x, int y);
     virtual bool inConnectRight( int x, int y) { return false; }
 

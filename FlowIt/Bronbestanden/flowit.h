@@ -12,6 +12,8 @@
 #include "flowroutine.h"
 #include "flowpage.h"
 
+#define STANDARDOBJECTS 7
+
 #define DT_OBJECT   0   // flow object selected
 #define DT_CONNECT  1   // fo connect circle selected
 #define DT_LEFT     2   // fo left column circle selected
@@ -40,6 +42,9 @@ extern QList<ObjectWid*>    g_objects;
 extern QString g_tabs;
 extern FlowPage* g_rootPage;
 
+extern QString              g_savePath;
+extern QString              g_exportPath;
+
 extern Template* g_findTemplate( QString include);
 extern void g_parseTag( QString ln, QString& tag, QString& val);
 
@@ -65,7 +70,7 @@ public:
     void createVariable( QString type, QString name);
     bool deleteVariable( QString name);
 
-    void createObject( ObjectWid* ow, QString name);
+    void createObject( ObjectWid* ow, QString name, bool isclass = true);
     bool deleteObject( QString name);
     void listObjects();
 
@@ -99,12 +104,11 @@ private slots:
 private:
     Ui::FlowIt *ui;
 
-    QString m_savePath;
-
     void clear();
     void paintChart( QPainter& painter, Column* column, int x, int y, bool print = false);
     void paintCode( QPainter& painter, int x, int y, int h);
     void exportCode( QTextStream& out);
+    void exportMake( QTextStream& in, QTextStream& out, QString path, QString file);
 
     int                 m_yObj; // position for next object widget
 

@@ -61,118 +61,17 @@
     </rect>
    </property>
   </widget>
-  <widget class="QPushButton" name="pbOK">
-   <property name="geometry">
-    <rect>
-     <x>200</x>
-     <y>290</y>
-     <width>71</width>
-     <height>23</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>OK</string>
-   </property>
-  </widget>
-  <widget class="QRadioButton" name="rbCode">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>220</y>
-     <width>261</width>
-     <height>17</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Algemene code invoegen</string>
-   </property>
-  </widget>
-  <widget class="QRadioButton" name="rbFunc">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>110</y>
-     <width>261</width>
-     <height>17</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Een functie van een apparaat aanroepen</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="lblInst">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>140</y>
-     <width>81</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Van decaratie</string>
-   </property>
-  </widget>
-  <widget class="QComboBox" name="cbInst">
-   <property name="geometry">
-    <rect>
-     <x>90</x>
-     <y>140</y>
-     <width>181</width>
-     <height>21</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QComboBox" name="cbFunc">
-   <property name="geometry">
-    <rect>
-     <x>90</x>
-     <y>170</y>
-     <width>181</width>
-     <height>22</height>
-    </rect>
-   </property>
-   <property name="editable">
-    <bool>true</bool>
-   </property>
-  </widget>
   <widget class="Line" name="line_1">
    <property name="geometry">
     <rect>
-     <x>0</x>
-     <y>60</y>
-     <width>281</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="orientation">
-    <enum>Qt::Horizontal</enum>
-   </property>
-  </widget>
-  <widget class="Line" name="line_2">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>270</y>
-     <width>281</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="orientation">
-    <enum>Qt::Horizontal</enum>
-   </property>
-  </widget>
-  <widget class="QComboBox" name="cbCode">
-   <property name="geometry">
-    <rect>
      <x>10</x>
-     <y>240</y>
+     <y>60</y>
      <width>261</width>
-     <height>21</height>
+     <height>20</height>
     </rect>
    </property>
-   <property name="editable">
-    <bool>true</bool>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
    </property>
   </widget>
   <widget class="QFrame" name="frame">
@@ -190,41 +89,159 @@
    <property name="frameShadow">
     <enum>QFrame::Raised</enum>
    </property>
-   <widget class="QLabel" name="lblFunc">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>170</y>
-      <width>81</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Functie</string>
-    </property>
-   </widget>
+  </widget>
+  <widget class="QComboBox" name="cbDevice">
+   <property name="geometry">
+    <rect>
+     <x>90</x>
+     <y>140</y>
+     <width>181</width>
+     <height>21</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QRadioButton" name="rbDevice">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>110</y>
+     <width>261</width>
+     <height>17</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Een functie van een declaratie aanroepen</string>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="cbFuncDev">
+   <property name="geometry">
+    <rect>
+     <x>90</x>
+     <y>170</y>
+     <width>181</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="editable">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QLabel" name="lblDevice">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>140</y>
+     <width>81</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Declaratie</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="lblFuncDev">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>170</y>
+     <width>81</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Functie</string>
+   </property>
+  </widget>
+  <widget class="QRadioButton" name="rbCode">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>210</y>
+     <width>261</width>
+     <height>17</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Algemene code invoegen</string>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="cbCode">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>230</y>
+     <width>261</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="editable">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pbAccept">
+   <property name="geometry">
+    <rect>
+     <x>200</x>
+     <y>280</y>
+     <width>71</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>OK</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pbReject">
+   <property name="geometry">
+    <rect>
+     <x>120</x>
+     <y>280</y>
+     <width>71</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Annuleer</string>
+   </property>
+  </widget>
+  <widget class="Line" name="line_2">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>260</y>
+     <width>261</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
   </widget>
   <zorder>frame</zorder>
   <zorder>lblChart</zorder>
   <zorder>lblCode</zorder>
   <zorder>leChart</zorder>
-  <zorder>pbOK</zorder>
-  <zorder>rbCode</zorder>
-  <zorder>rbFunc</zorder>
-  <zorder>lblInst</zorder>
-  <zorder>cbInst</zorder>
-  <zorder>cbFunc</zorder>
   <zorder>line_1</zorder>
-  <zorder>line_2</zorder>
+  <zorder>cbDevice</zorder>
+  <zorder>rbDevice</zorder>
+  <zorder>cbFuncDev</zorder>
+  <zorder>lblDevice</zorder>
+  <zorder>lblFuncDev</zorder>
+  <zorder>rbCode</zorder>
   <zorder>cbCode</zorder>
+  <zorder>pbAccept</zorder>
+  <zorder>pbReject</zorder>
+  <zorder>line_2</zorder>
  </widget>
  <tabstops>
   <tabstop>leChart</tabstop>
-  <tabstop>rbFunc</tabstop>
-  <tabstop>cbInst</tabstop>
-  <tabstop>cbFunc</tabstop>
+  <tabstop>rbDevice</tabstop>
+  <tabstop>cbDevice</tabstop>
+  <tabstop>cbFuncDev</tabstop>
   <tabstop>rbCode</tabstop>
-  <tabstop>pbOK</tabstop>
+  <tabstop>cbCode</tabstop>
+  <tabstop>pbReject</tabstop>
+  <tabstop>pbAccept</tabstop>
  </tabstops>
  <resources/>
  <connections/>

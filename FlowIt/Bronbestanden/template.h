@@ -22,6 +22,7 @@ public:
     QString getInclude();
     QString getUsing();
     QString getClass();
+    QString getModule();
     QString getFunction( int ix);
     int     functionCount();
 
@@ -31,6 +32,7 @@ protected:
     QString m_incl;
     QString m_using;
     QString m_class;
+    QString m_module;
     QStringList m_func;
 };
 

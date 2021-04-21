@@ -2,7 +2,7 @@
 <type>sensor</type>
 <include>switch.h</include>
 <class>Switch</class>
-<function>setPin( 10)</function>
+<function>setPin( 10, GND)</function>
 <function>setNormalOpen( true)</function>
 <function>triggerEvent( routine)</function>
 <function>read( )</function>

@@ -24,17 +24,12 @@ ObjectWid::~ObjectWid()
     delete ui;
 }
 
-void ObjectWid::init( QString name)
+void ObjectWid::init( QString name, bool isclass)
 {
     m_ypos = 0;
     m_name = name;
-
-    switch ( m_fot ) {
-        case FOT_CHECK:
-        case FOT_WHILE:
-        case FOT_REPEAT:    m_height = OW_HEIGHT * 2; break;
-        default:            m_height = OW_HEIGHT;
-    }
+    m_isclass = isclass;
+    m_height = OW_HEIGHT;
 }
 
 void ObjectWid::read( QTextStream& in)
@@ -45,12 +40,16 @@ void ObjectWid::read( QTextStream& in)
         ln = in.readLine();
         g_parseTag( ln, tag, val);
         if ( tag == "<type>" ) m_fot = val.toInt();
+        else
         if ( tag == "<name>" ) m_name = val;
+        else
         if ( tag == "<include>" ) {
             m_incl = val;
             m_templ = g_findTemplate( m_incl);
         }
+        else
         if ( tag == "<instance>" ) m_inst = val;
+        else
         if ( tag == "</declaration>" ) break;
     }
 }
@@ -65,7 +64,7 @@ void ObjectWid::write( QTextStream& out)
     out << "</declaration>\n\n";
 }
 
-void ObjectWid::setDeclaration( QString classname, QString instance, QString include)
+void ObjectWid::setDeclaration( QString instance, QString include)
 {
     m_templ = g_findTemplate( include);
     m_incl = include;
@@ -87,6 +86,11 @@ int ObjectWid::type()
     return m_fot;
 }
 
+bool ObjectWid::isModule()
+{
+    return !m_isclass;
+}
+
 Template* ObjectWid::getTemplate()
 {
     return m_templ;
@@ -101,9 +105,9 @@ bool ObjectWid::inDrag( int x, int y)
 {
     int yp = m_ypos + height() / 2;
     return x > DRAG_HOME + 100 &&
-           x < DRAG_HOME + 110 &&
-           y > yp - 5 &&
-           y < yp + 5;
+           x < DRAG_HOME + 120 &&
+           y > yp - 10 &&
+           y < yp + 10;
 }
 
 bool ObjectWid::selected()
@@ -124,7 +128,8 @@ void ObjectWid::home()
 
 void ObjectWid::paintEvent(QPaintEvent *)
 {
-    m_sel = ((m_fot == FOT_ACTUATOR || m_fot == FOT_SENSOR) && underMouse());
+    m_sel = ((m_fot == FOT_ACTUATOR || m_fot == FOT_SENSOR ||
+              m_fot == FOT_STORAGE || m_fot == FOT_INTERFACE) && underMouse());
 
     // it is advised to use QImage as an intermediate
     // painting device in order to be sure to get identical
@@ -133,7 +138,7 @@ void ObjectWid::paintEvent(QPaintEvent *)
     QImage img( 2000, 1500, QImage::Format_ARGB32);
     QPainter p( &img);
     p.setPen( m_sel ? Qt::cyan : Qt::darkGreen);
-    p.setFont( QFont( "Arial", 12));
+    p.setFont( QFont( "Arial", m_fot < FOT_ACTUATOR ? 8 : 10));
 
     switch ( m_fot ) {
     case FOT_CHECK:         p.drawLine( 0, m_height/2, OW_WIDTH/2, 0);
@@ -154,6 +159,15 @@ void ObjectWid::paintEvent(QPaintEvent *)
                             resize( OW_WIDTH+1, m_height+1);
                             break;
 
+    case FOT_UNTIL:         p.drawLine( 0, m_height/2, OW_WIDTH/2, 0);
+                            p.drawLine( OW_WIDTH/2, 0, OW_WIDTH, m_height/2);
+                            p.drawLine( OW_WIDTH, m_height/2, OW_WIDTH/2, m_height);
+                            p.drawLine( OW_WIDTH/2, m_height, 0, m_height/2);
+                            p.setPen( Qt::darkGreen);
+                            p.drawText( QRect( 0, 0, OW_WIDTH, m_height), Qt::AlignCenter, FO_UNTIL);
+                            resize( OW_WIDTH+1, m_height+1);
+                            break;
+
     case FOT_REPEAT:        p.drawLine( 0, m_height/2, OW_WIDTH/2, 0);
                             p.drawLine( OW_WIDTH/2, 0, OW_WIDTH, m_height/2);
                             p.drawLine( OW_WIDTH, m_height/2, OW_WIDTH/2, m_height);
@@ -167,7 +181,7 @@ void ObjectWid::paintEvent(QPaintEvent *)
                             p.drawLine( OW_WIDTH/2 + 10, m_height/2, OW_WIDTH/2, m_height);
                             p.drawLine( OW_WIDTH/2, m_height, OW_WIDTH/2 - 10, m_height/2);
                             p.setPen( Qt::darkGreen);
-                            p.setFont( QFont( "Arial", 10));
+                            p.setFont( QFont( "Arial", 8));
                             p.drawText( QRect( 0, 0, OW_WIDTH, m_height/2 - 5), Qt::AlignCenter, FO_PAGE);
                             resize( OW_WIDTH+1, m_height+1);
                             break;
@@ -195,7 +209,7 @@ void ObjectWid::paintEvent(QPaintEvent *)
                             p.drawLine( 0, 0, 10, m_height/2);
                             p.drawLine( 0, m_height, 10, m_height/2);
                             p.setPen( Qt::darkGreen);
-                            p.drawText( QRect( 10, 5, OW_WIDTH, m_height-5), Qt::AlignCenter, m_name);
+                            p.drawText( QRect( 10, 5, OW_WIDTH, m_height), Qt::AlignCenter, m_name);
                             p.setFont( QFont( "Arial", 8));
                             p.drawText( QRect( 15, 0, OW_WIDTH, m_height), Qt::AlignLeft, m_inst);
                             resize( OW_WIDTH+1, m_height+1);
@@ -206,11 +220,33 @@ void ObjectWid::paintEvent(QPaintEvent *)
                             p.drawLine( OW_WIDTH-10, 0, OW_WIDTH, m_height/2);
                             p.drawLine( OW_WIDTH-10, m_height, OW_WIDTH, m_height/2);
                             p.setPen( Qt::darkGreen);
-                            p.drawText( QRect( 0, 5, OW_WIDTH-10, m_height-5), Qt::AlignCenter, m_name);
+                            p.drawText( QRect( 0, 5, OW_WIDTH-10, m_height), Qt::AlignCenter, m_name);
                             p.setFont( QFont( "Arial", 8));
                             p.drawText( QRect( 5, 0, OW_WIDTH-10, m_height), Qt::AlignLeft, m_inst);
                             resize( OW_WIDTH+1, m_height+1);
                             break;
+
+    case FOT_STORAGE:       p.drawArc( 0, 1, m_height, m_height-1, 16*(OW_WIDTH-10), 16*180);
+                            p.drawArc( OW_WIDTH - m_height, 1, m_height, m_height, 16*(OW_WIDTH-10), 16*180);
+                            p.drawArc( OW_WIDTH - m_height, 1, m_height, m_height, 16*270, 16*180);
+                            p.drawLine( m_height/2, 0, OW_WIDTH-m_height/2, 0);
+                            p.drawLine( m_height/2, m_height, OW_WIDTH-m_height/2, m_height);
+                            p.setPen( Qt::darkGreen);
+                            p.drawText( QRect( 0, 5, OW_WIDTH-10, m_height), Qt::AlignCenter, m_name);
+                            p.setFont( QFont( "Arial", 8));
+                            p.drawText( QRect( 10, 0, OW_WIDTH-10, m_height), Qt::AlignLeft, m_inst);
+                            resize( OW_WIDTH+1, m_height+1);
+                            break;
+
+    case FOT_INTERFACE:     p.drawLine( 0, m_height, 5, 0);
+                            p.drawLine( OW_WIDTH - 5, m_height, OW_WIDTH, 0  );
+                            p.drawLine( 5, 0, OW_WIDTH, 0);
+                            p.drawLine( 0, m_height, OW_WIDTH - 5, m_height);
+                            p.setPen( Qt::darkGreen);
+                            p.drawText( QRect( 0, 5, OW_WIDTH, m_height), Qt::AlignCenter, m_name);
+                            p.setFont( QFont( "Arial", 8));
+                            p.drawText( QRect( 10, 0, OW_WIDTH, m_height), Qt::AlignLeft, m_inst);
+                            resize( OW_WIDTH+1, m_height+1);
 
     default:                break;
     }

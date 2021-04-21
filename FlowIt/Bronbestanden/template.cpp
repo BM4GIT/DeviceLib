@@ -30,10 +30,15 @@ bool Template::read( QTextStream& in)
                 m_fot = FOT_ACTUATOR;
             if ( val.toLower() == "sensor" )
                 m_fot = FOT_SENSOR;
+            if ( val.toLower() == "storage" )
+                m_fot = FOT_STORAGE;
+            if ( val.toLower() == "interface" )
+                m_fot = FOT_INTERFACE;
         }
         if ( tag == "<include>" ) m_incl = val;
         if ( tag == "<using>" ) m_using = val;
         if ( tag == "<class>" ) m_class = val;
+        if ( tag == "<module>" ) m_module = val;
         if ( tag == "<function>" ) m_func.append( val);
         if ( tag == "</template>" ) break;
     }
@@ -49,11 +54,18 @@ void Template::write( QTextStream& out)
     switch ( m_fot ) {
         case FOT_ACTUATOR:  out << "\t<type>actuator</type>\n"; break;
         case FOT_SENSOR:    out << "\t<type>sensor</type>\n"; break;
+        case FOT_STORAGE:   out << "\t<type>storage</type>\n"; break;
+        case FOT_INTERFACE: out << "\t<type>interface</type>\n"; break;
     }
 
-    out << "\t<include>" << m_incl << "</include>\n";
-    out << "\t<using>" << m_using << "</using>\n";
-    out << "\t<class>" << m_class << "</class>\n";
+    if ( !m_incl.isEmpty() )
+        out << "\t<include>" << m_incl << "</include>\n";
+    if ( !m_using.isEmpty() )
+        out << "\t<using>" << m_using << "</using>\n";
+    if ( !m_class.isEmpty() )
+        out << "\t<class>" << m_class << "</class>\n";
+    if ( !m_module.isEmpty() )
+        out << "\t<module>" << m_module << "</module>\n";
     for ( int i = 0; i < m_func.size(); i++ )
         out << "\t<function>" << m_func.at( i) << "</function>\n";
 
@@ -89,6 +101,11 @@ QString Template::getUsing()
 QString Template::getClass()
 {
     return m_class;
+}
+
+QString Template::getModule()
+{
+    return m_module;
 }
 
 QString Template::getFunction( int ix)

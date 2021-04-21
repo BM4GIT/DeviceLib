@@ -13,6 +13,7 @@ QString I_DELROUTINE;
 QString I_DELPAGE;
 QString I_CODESUCCESS;
 QString I_CODEFAILURE;
+QString I_GEANYFAILURE;
 QString I_PDFSUCCESS;
 QString I_PDFFAILURE;
 QString I_PRINTSUCCESS;
@@ -21,6 +22,7 @@ QString I_OBJECTINUSE;
 QString I_INVALIDROUTINE;
 QString I_INVALIDDECL;
 QString I_NOPAGENESTING;
+QString I_FILEEXISTS;
 
 QString T_ASKACCEPT;
 QString T_ASKREJECT;
@@ -32,9 +34,12 @@ QString T_DELVARIABLE;
 QString T_LBLVARIABLE;
 QString T_ADDACTUATOR;
 QString T_ADDSENSOR;
+QString T_ADDSTORAGE;
+QString T_ADDGUI;
+QString T_ADDDEVICE;
 QString T_DELDEVICE;
 QString T_LBLDEVICE;
-QString T_VARTYPE;
+QString T_TYPE;
 QString T_DEVCLASS;
 QString T_DEVUSING;
 QString T_DEVINCLUDE;
@@ -43,13 +48,16 @@ QString T_DECLDO;
 QString T_DECLREJECT;
 QString T_FILCHARTTEXT;
 QString T_FILCODETEXT;
-QString T_FILFUNCCALL;
+QString T_FILDEVCALL;
+QString T_FILMODCALL;
 QString T_FILGENERAL;
 QString T_FILFUNCTION;
-QString T_FILDECLARATION;
+QString T_FILDEVICE;
+QString T_FILMODULE;
 QString T_EXPTITLE;
 QString T_EXPARDUINO;
 QString T_EXPRASPBERRY;
+QString T_EXPGEANY;
 QString T_EXPFLOWCHART;
 QString T_EXPSAVEAS;
 QString T_EXPPRINTCHART;
@@ -64,7 +72,7 @@ QString T_EXPORT;
 QString V_FIPFILES;
 QString V_INOFILES;
 QString V_CPPFILES;
-QString V_PNGFILES;
+QString V_PDFFILES;
 QString V_OURAPP;
 QString V_PAGE;
 QString V_LONG;
@@ -77,6 +85,7 @@ QString V_BOOL;
 
 QString FO_CHECK;
 QString FO_WHILE;
+QString FO_UNTIL;
 QString FO_REPEAT;
 QString FO_PAGE;
 QString FO_WAIT;
@@ -116,6 +125,7 @@ void setLanguage()
         if ( tag == "I_DELPAGE" ) I_DELPAGE = val; else
         if ( tag == "I_CODESUCCESS" ) I_CODESUCCESS = val; else
         if ( tag == "I_CODEFAILURE" ) I_CODEFAILURE = val; else
+        if ( tag == "I_GEANYFAILURE" ) I_GEANYFAILURE = val; else
         if ( tag == "I_PDFSUCCESS" ) I_PDFSUCCESS = val; else
         if ( tag == "I_PDFFAILURE" ) I_PDFFAILURE = val; else
         if ( tag == "I_PRINTSUCCESS" ) I_PRINTSUCCESS = val; else
@@ -124,6 +134,7 @@ void setLanguage()
         if ( tag == "I_INVALIDROUTINE" ) I_INVALIDROUTINE = val; else
         if ( tag == "I_INVALIDDECL" ) I_INVALIDDECL = val; else
         if ( tag == "I_NOPAGENESTING" ) I_NOPAGENESTING = val; else
+        if ( tag == "I_FILEEXISTS" ) I_FILEEXISTS = val; else
 
         if ( tag == "T_ASKACCEPT" ) T_ASKACCEPT = val; else
         if ( tag == "T_ASKREJECT" ) T_ASKREJECT = val; else
@@ -135,9 +146,12 @@ void setLanguage()
         if ( tag == "T_LBLVARIABLE" ) T_LBLVARIABLE = val; else
         if ( tag == "T_ADDACTUATOR" ) T_ADDACTUATOR = val; else
         if ( tag == "T_ADDSENSOR" ) T_ADDSENSOR = val; else
+        if ( tag == "T_ADDSTORAGE" ) T_ADDSTORAGE = val; else
+        if ( tag == "T_ADDGUI" ) T_ADDGUI = val; else
+        if ( tag == "T_ADDDEVICE" ) T_ADDDEVICE = val; else
         if ( tag == "T_DELDEVICE" ) T_DELDEVICE = val; else
         if ( tag == "T_LBLDEVICE" ) T_LBLDEVICE = val; else
-        if ( tag == "T_VARTYPE" ) T_VARTYPE = val; else
+        if ( tag == "T_TYPE" ) T_TYPE = val; else
         if ( tag == "T_DEVCLASS" ) T_DEVCLASS = val; else
         if ( tag == "T_DEVUSING" ) T_DEVUSING = val; else
         if ( tag == "T_DEVINCLUDE" ) T_DEVINCLUDE = val; else
@@ -146,13 +160,16 @@ void setLanguage()
         if ( tag == "T_DECLREJECT" ) T_DECLREJECT = val; else
         if ( tag == "T_FILCHARTTEXT" ) T_FILCHARTTEXT = val; else
         if ( tag == "T_FILCODETEXT" ) T_FILCODETEXT = val; else
-        if ( tag == "T_FILFUNCCALL" ) T_FILFUNCCALL = val; else
+        if ( tag == "T_FILDEVCALL" ) T_FILDEVCALL = val; else
+        if ( tag == "T_FILMODCALL" ) T_FILMODCALL = val; else
         if ( tag == "T_FILGENERAL" ) T_FILGENERAL = val; else
         if ( tag == "T_FILFUNCTION" ) T_FILFUNCTION = val; else
-        if ( tag == "T_FILDECLARATION" ) T_FILDECLARATION = val; else
+        if ( tag == "T_FILDEVICE" ) T_FILDEVICE = val; else
+        if ( tag == "T_FILMODULE" ) T_FILMODULE = val; else
         if ( tag == "T_EXPTITLE" ) T_EXPTITLE = val; else
         if ( tag == "T_EXPARDUINO" ) T_EXPARDUINO = val; else
         if ( tag == "T_EXPRASPBERRY" ) T_EXPRASPBERRY = val; else
+        if ( tag == "T_EXPGEANY" ) T_EXPGEANY = val; else
         if ( tag == "T_EXPFLOWCHART" ) T_EXPFLOWCHART = val; else
         if ( tag == "T_EXPSAVEAS" ) T_EXPSAVEAS = val; else
         if ( tag == "T_EXPPRINTCHART" ) T_EXPPRINTCHART = val; else
@@ -166,12 +183,13 @@ void setLanguage()
         if ( tag == "V_FIPFILES" ) V_FIPFILES = val; else
         if ( tag == "V_INOFILES" ) V_INOFILES = val; else
         if ( tag == "V_CPPFILES" ) V_CPPFILES = val; else
-        if ( tag == "V_PNGFILES" ) V_PNGFILES = val; else
+        if ( tag == "V_PDFFILES" ) V_PDFFILES = val; else
         if ( tag == "V_OURAPP" ) V_OURAPP = val; else
         if ( tag == "V_PAGE" ) V_PAGE = val; else
 
         if ( tag == "FO_CHECK" ) FO_CHECK = val; else
         if ( tag == "FO_WHILE" ) FO_WHILE = val; else
+        if ( tag == "FO_UNTIL" ) FO_UNTIL = val; else
         if ( tag == "FO_REPEAT" ) FO_REPEAT = val; else
         if ( tag == "FO_PAGE" ) FO_PAGE = val; else
         if ( tag == "FO_WAIT" ) FO_WAIT = val; else

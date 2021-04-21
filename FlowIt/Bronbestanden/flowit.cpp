@@ -16,11 +16,14 @@
 #include "flowobject.h"
 #include "flowcheck.h"
 #include "flowwhile.h"
+#include "flowuntil.h"
 #include "flowrepeat.h"
 #include "flowwait.h"
 #include "flowdo.h"
 #include "flowactuator.h"
 #include "flowsensor.h"
+#include "flowstorage.h"
+#include "flowinterface.h"
 #include "flowpage.h"
 #include "devicedlg.h"
 #include "objectwid.h"
@@ -38,8 +41,6 @@ QString TITLE = "FlowIt 1.0 - ";
 #define YOFFS 70
 #define XOFFS 225
 #endif
-
-#define STANDARDOBJECTS 6
 
 bool                g_pan = false;
 int                 g_panX = -1;
@@ -67,6 +68,9 @@ QList<ObjectWid*>   g_objects;
 
 QString             g_tabs;
 FlowPage*           g_rootPage = NULL;
+
+QString             g_savePath;
+QString             g_exportPath;
 
 Template* g_findTemplate( QString include)
 {
@@ -120,7 +124,7 @@ FlowIt::FlowIt(QWidget *parent) :
     setWindowState( Qt::WindowMaximized);
 
     getLatestProject();
-    if ( m_savePath.isEmpty() ) {
+    if ( g_savePath.isEmpty() ) {
         clear();
     }
     else
@@ -229,9 +233,9 @@ bool FlowIt::deleteVariable( QString name)
     return false;
 }
 
-void FlowIt::createObject( ObjectWid* ow, QString name)
+void FlowIt::createObject( ObjectWid* ow, QString name, bool isclass)
 {
-    ow->init( name);
+    ow->init( name, isclass);
     ow->show();
     g_objects.append( ow);
 }
@@ -240,14 +244,17 @@ bool FlowIt::deleteObject( QString name)
 {
     // find the object
     int i, ix;
-    for ( i = 6; i < g_objects.size(); i++ )
+    for ( i = STANDARDOBJECTS; i < g_objects.size(); i++ )
         if ( g_objects.at( i)->name() == name )
             break;
     if ( i >= g_objects.size() )
         return false;
 
     // check if the object is still used by the flowchart
-    if ( hasInstance( g_objects.at( i)->getInstance()) ) {
+    QString str = g_objects.at( i)->getInstance(); // for a class declaration
+    if ( str.isEmpty() )
+        str = g_objects.at( i)->name(); // for module names
+    if ( hasInstance( str) ) {
         QMessageBox mb;
         mb.setText( I_OBJECTINUSE);
         releaseKeyboard();
@@ -274,8 +281,9 @@ bool FlowIt::deleteObject( QString name)
     }
 
     // delete the object declaration
-    delete g_objects.at( i);
+    ObjectWid* ow = g_objects.at( i);
     g_objects.removeAt( i);
+    delete ow;
     listObjects();
     saveProject();
     repaint();
@@ -350,7 +358,7 @@ void FlowIt::clear()
     ui->toolBar->addAction( action);
     ui->toolBar->connect( action, SIGNAL(triggered()), this, SLOT(on_file_triggered()));
 
-    if ( m_savePath.isEmpty() ) return;
+    if ( g_savePath.isEmpty() ) return;
 
     action = new QAction( ui->toolBar);
     action->setIcon( QIcon( ":/export.png"));
@@ -385,6 +393,8 @@ void FlowIt::clear()
     createObject( ow, FO_CHECK);
     ow = new ObjectWid( this, FOT_WHILE);
     createObject( ow, FO_WHILE);
+    ow = new ObjectWid( this, FOT_UNTIL);
+    createObject( ow, FO_UNTIL);
     ow = new ObjectWid( this, FOT_REPEAT);
     createObject( ow, FO_REPEAT);
     ow = new ObjectWid( this, FOT_WAIT);
@@ -445,6 +455,8 @@ void FlowIt::paintCode( QPainter& pi, int x, int y, int h)
     // draw declarations
     for ( int i = STANDARDOBJECTS; i < g_objects.size(); i++ ) {
         ObjectWid* ow = g_objects.at( i);
+        if ( ow->getTemplate()->getClass().isEmpty() )
+            continue;
         QString decl = ow->getTemplate()->getClass() + " " + ow->getInstance() + ";";
         if ( !ow->getTemplate()->getUsing().isEmpty() )
             decl = ow->getTemplate()->getUsing() + "::" + decl;
@@ -500,9 +512,29 @@ void FlowIt::exportCode( QTextStream& out)
     g_tools.at( 1)->exportCode( out);            // loop()
 }
 
+void FlowIt::exportMake( QTextStream& in, QTextStream& out, QString path, QString file)
+{
+    QString ln;
+    int ix;
+    while ( !in.atEnd() ) {
+        ln = in.readLine();
+        while ( (ix = ln.indexOf( "#F#")) >= 0 ) {
+            QString ls = ln.left( ix);
+            QString lr = ln.right( ln.length() - ix - 3);
+            ln = ls + file + lr;
+        }
+        while ( (ix = ln.indexOf( "#P#")) >= 0 ) {
+            QString ls = ln.left( ix);
+            QString lr = ln.right( ln.length() - ix - 3);
+            ln = ls + path + lr;
+        }
+        out << ln + '\n';
+    }
+}
+
 void FlowIt::paintEvent(QPaintEvent *)
 {
-    if ( m_savePath.isEmpty() ) {
+    if ( g_savePath.isEmpty() ) {
         QImage img;
         img.load( "fistartup.png");
         QRect rd = geometry();
@@ -516,8 +548,8 @@ void FlowIt::paintEvent(QPaintEvent *)
         return;
     }
 
-    // when starting an empty project, m_column is NULL
-    if ( !m_column ) return;
+    // when starting an empty project g_tools does not contain 'setup' and 'loop' yet
+    if ( g_tools.size() < 2 ) return;
 
     // it is advised to use QImage as an intermediate
     // painting device in order to be sure to get identical
@@ -666,11 +698,18 @@ void FlowIt::mouseReleaseEvent(QMouseEvent * event)
             // create the new flowobject, meanwhile
             // prepare the instance field of the attribute dialog
             switch ( g_owDrag->type() ) {
-                case FOT_CHECK:     fo = new FlowCheck( column, this); break;
-                case FOT_WHILE:     fo = new FlowWhile( column, this); break;
+                case FOT_CHECK:     fo = new FlowCheck( column, this);
+                                    dlg.setMode( FILMODE_GENERAL);
+                                    break;
+                case FOT_WHILE:     fo = new FlowWhile( column, this);
+                                    dlg.setMode( FILMODE_GENERAL);
+                                    break;
+                case FOT_UNTIL:     fo = new FlowUntil( column, this);
+                                    dlg.setMode( FILMODE_GENERAL);
+                                    break;
                 case FOT_REPEAT:    fo = new FlowRepeat( column, this);
                                     ask.setLabel( FO_TIMES);
-                                    ask.setValue( 10);
+                                    ask.setValue( QString::number( 10));
                                     break;
                 case FOT_PAGE:      {
                                     if ( m_column->root()->type() == FOT_PAGE ) {
@@ -704,29 +743,32 @@ void FlowIt::mouseReleaseEvent(QMouseEvent * event)
                                     }
                 case FOT_WAIT:      fo = new FlowWait( column);
                                     ask.setLabel( FO_MSEC);
-                                    ask.setValue( 1000);
+                                    ask.setValue( QString::number( 1000));
                                     break;
                 case FOT_DO:        {
                                     fo = new FlowDo( column);
-                                    dlg.addInstance( ""); // means no instances
                                     QList<QAction*> al = ui->toolBar->actions();
                                     for ( int i = 11; i < al.size(); i++ )
                                         dlg.addRoutine( al.at( i)->text() + "()");
+                                    dlg.setMode( FILMODE_MODULE);
                                     break;
                                     }
                 case FOT_ACTUATOR:  fo = new FlowActuator( column);
                                     ((FlowActuator*)fo)->init( g_owDrag->name(), g_owDrag->getInstance(), g_owDrag->getTemplate());
-                                    dlg.addInstance( g_owDrag->getInstance());
+                                    dlg.setMode( FILMODE_DEVICE, g_owDrag->name(), g_owDrag->getInstance());
                                     break;
                 case FOT_SENSOR:    fo = new FlowSensor( column);
                                     ((FlowSensor*)fo)->init( g_owDrag->name(), g_owDrag->getInstance(), g_owDrag->getTemplate());
-                                    dlg.addInstance( g_owDrag->getInstance());
+                                    dlg.setMode( FILMODE_DEVICE, g_owDrag->name(), g_owDrag->getInstance());
                                     break;
-            }
-
-            if ( g_owDrag->type() == FOT_CHECK || g_owDrag->type() == FOT_WHILE ) {
-                for ( int i = STANDARDOBJECTS; i < g_objects.size(); i++ )
-                    dlg.addInstance( g_objects.at( i)->getInstance());
+                case FOT_STORAGE:   fo = new FlowStorage( column);
+                                    ((FlowStorage*)fo)->init( g_owDrag->name(), g_owDrag->getInstance(), g_owDrag->getTemplate());
+                                    dlg.setMode( FILMODE_DEVICE, g_owDrag->name(), g_owDrag->getInstance());
+                                    break;
+                case FOT_INTERFACE: fo = new FlowInterface( column);
+                                    ((FlowInterface*)fo)->init( g_owDrag->name(), g_owDrag->getInstance(), g_owDrag->getTemplate());
+                                    dlg.setMode( FILMODE_DEVICE, g_owDrag->name(), g_owDrag->getInstance());
+                                    break;
             }
 
             // position the flowobject in the chart
@@ -742,31 +784,34 @@ void FlowIt::mouseReleaseEvent(QMouseEvent * event)
             if ( g_owDrag->type() == FOT_REPEAT || g_owDrag->type() == FOT_WAIT ) {
                 releaseKeyboard();
                 ask.exec();
-                grabKeyboard();
-                int val = ask.value();
-                QString txt = (val == -1 ? "" : QString::number( val));
-                fo->setChartText( txt);
-                fo->setCodeText( txt);
+                QString val = ask.value();
+                fo->setChartText( val);
+                fo->setCodeText( val);
             }
             else {
                 if ( g_owDrag->type() != FOT_PAGE ) {
                     releaseKeyboard();
                     dlg.exec();
-                    grabKeyboard();
                     fo->setChartText( dlg.chartText());
                     fo->setCodeText( dlg.codeText());
                 }
             }
 
+            grabKeyboard();
             saveProject();
         }
     }
     else {
+
+        //
+        // handle an existing flowobject
+        //
+
         if ( g_fo ) {
             if ( g_dragging && (g_foDrag != g_fo) ) {
 
                 //
-                // reposition an existing flowobject
+                // reposition the flowobject
                 //
 
                 if ( (g_fo->column() != g_foDrag->column()) && // exclude from 'isChildOf'
@@ -788,6 +833,9 @@ void FlowIt::mouseReleaseEvent(QMouseEvent * event)
                                         if ( g_fo->type() == FOT_WHILE )
                                             ((FlowWhile*)g_fo)->column()->insertRoot( g_foDrag);
                                         else
+                                        if ( g_fo->type() == FOT_UNTIL )
+                                            ((FlowUntil*)g_fo)->column()->insertRoot( g_foDrag);
+                                        else
                                             ((FlowRepeat*)g_fo)->column()->insertRoot( g_foDrag);
                                         break;
                         case DT_RIGHT:  ((FlowCheck*)g_fo)->columnRight()->insertRoot( g_foDrag);
@@ -802,48 +850,43 @@ void FlowIt::mouseReleaseEvent(QMouseEvent * event)
             else {
 
                 //
-                // modify the attributes of an existing flowobject
+                // modify the attributes of the flowobject
                 //
 
-                FilloutDlg dlg;
-                AskDlg ask;
-                if ( g_fo->type() == FOT_ACTUATOR )
-                    dlg.addInstance( ((FlowActuator*)g_fo)->getInstance());
-                else
-                if ( g_fo->type() == FOT_SENSOR )
-                    dlg.addInstance( ((FlowSensor*)g_fo)->getInstance());
-                else
-                if ( g_fo->type() == FOT_DO )
-                    dlg.addInstance( ""); // means no instance
-                else
-                    for ( int i = STANDARDOBJECTS; i < g_objects.size(); i++ )
-                        dlg.addInstance( g_objects.at( i)->getInstance());
-
                 if ( g_fo->type() == FOT_REPEAT || g_fo->type() == FOT_WAIT ) {
+                    AskDlg ask;
                     int val = g_fo->getValue();
                     if ( !val )
                         val = (g_fo->type() == FOT_REPEAT ? 10 : 1000);
-                    ask.setValue( val);
+                    ask.setValue( QString::number( val));
                     ask.setLabel( g_fo->type() == FOT_REPEAT ? FO_TIMES : FO_MSEC);
                     releaseKeyboard();
-                    ask.exec();
-                    grabKeyboard();
-                    val = ask.value();
-                    QString txt = (val == -1 ? "" : QString::number( val));
-                    g_fo->setChartText( txt);
-                    g_fo->setCodeText( txt);
+                    if ( ask.exec() == QDialog::Accepted ) {
+                        QString txt = ask.value();
+                        g_fo->setChartText( txt);
+                        g_fo->setCodeText( txt);
+                    }
                 }
                 else
                 if ( g_fo->type() != FOT_PAGE ) {
+                    FilloutDlg dlg;
+                    if ( g_fo->type() == FOT_CHECK || g_fo->type() == FOT_WHILE || g_fo->type() == FOT_UNTIL )
+                        dlg.setMode( FILMODE_GENERAL);
+                    else
+                    if ( g_fo->type() == FOT_DO )
+                        dlg.setMode( FILMODE_MODULE);
+                    else
+                        dlg.setMode( FILMODE_DEVICE, ((FlowSensor*)g_fo)->name(), ((FlowSensor*)g_fo)->getInstance());
                     dlg.setChartText( g_fo->chartText());
                     dlg.setCodeText( g_fo->codeText());
                     releaseKeyboard();
-                    dlg.exec();
-                    grabKeyboard();
-                    g_fo->setChartText( dlg.chartText());
-                    g_fo->setCodeText( dlg.codeText());
+                    if ( dlg.exec() == QDialog::Accepted ) {
+                        g_fo->setChartText( dlg.chartText());
+                        g_fo->setCodeText( dlg.codeText());
+                    }
                 }
 
+                grabKeyboard();
                 saveProject();
             }
         }
@@ -853,7 +896,6 @@ void FlowIt::mouseReleaseEvent(QMouseEvent * event)
     g_foDrag = NULL;
     g_dragging = false;
     g_fo = NULL;
-
     repaint();
 }
 
@@ -947,9 +989,9 @@ void FlowIt::on_file_triggered()
     }
     grabKeyboard();
     saveProject();
-    m_savePath = fd.selectedFiles().first();
+    g_savePath = fd.selectedFiles().first();
     clear();
-    if ( QFile::exists( m_savePath) )
+    if ( QFile::exists( g_savePath) )
         openProject();
     else
         newProject();
@@ -959,7 +1001,7 @@ void FlowIt::on_file_triggered()
 
 void FlowIt::newProject()
 {
-    setWindowTitle( TITLE + m_savePath);
+    setWindowTitle( TITLE + g_savePath);
 
     clear();
 
@@ -986,11 +1028,11 @@ void FlowIt::newProject()
 
 void FlowIt::openProject()
 {
-    setWindowTitle( TITLE + m_savePath);
+    setWindowTitle( TITLE + g_savePath);
 
     clear();
 
-    QFile file( m_savePath);
+    QFile file( g_savePath);
     if (!file.open( QIODevice::ReadOnly | QIODevice::Text))
         return;
 
@@ -1074,9 +1116,9 @@ void FlowIt::openProject()
 
 void FlowIt::saveProject()
 {
-    if ( m_savePath.isEmpty() ) return;
+    if ( g_savePath.isEmpty() ) return;
 
-    QFile file( m_savePath);
+    QFile file( g_savePath);
     if (!file.open( QIODevice::WriteOnly | QIODevice::Text))
         return;
 
@@ -1117,6 +1159,13 @@ void FlowIt::on_export_triggered()
     }
 
     if ( dlg.exportType() == EX_ARDUINO || dlg.exportType() == EX_RASPBERRY ) {
+        QString path = dlg.filePath();
+        int ix = path.lastIndexOf( '/');
+        QString name = path.right( path.length() - ix - 1);
+        path = path.left( ix);
+        QDir dir;
+        if ( !dir.exists( path) )
+            dir.mkdir( path);
         QFile file( dlg.filePath());
         if (!file.open( QIODevice::WriteOnly | QIODevice::Text)) {
             msg = I_CODEFAILURE;
@@ -1125,6 +1174,33 @@ void FlowIt::on_export_triggered()
         QTextStream out( &file);
         exportCode( out);
         file.close();
+
+        if ( dlg.exportType() == EX_RASPBERRY ) {
+            QMessageBox mb;
+            mb.setText( T_EXPGEANY);
+            mb.setStandardButtons( QMessageBox::Yes | QMessageBox::No);
+            if ( mb.exec() == QMessageBox::Yes ) {
+                if ( (ix = name.lastIndexOf( '.')) >= 0 )
+                    name = name.left( ix);
+                QFile fin( "geany.fi");
+                QFile fout( path + "/project.geany");
+                if ( fin.open( QIODevice::ReadOnly | QIODevice::Text) &&
+                     fout.open( QIODevice::WriteOnly | QIODevice::Text) ) {
+                    QTextStream in( &fin);
+                    QTextStream out( &fout);
+                    exportMake( in, out, path, name);
+                }
+                else {
+                    QMessageBox mb;
+                    msg = I_GEANYFAILURE;
+                    mb.setText( msg);
+                    mb.exec();
+                }
+                fin.close();
+                fout.close();
+            }
+        }
+
         msg = I_CODESUCCESS;
     }
     else
@@ -1207,17 +1283,17 @@ void FlowIt::on_routine_triggered()
 
 void FlowIt::setLatestProject()
 {
-    QFile file( "config.fi");
+    QFile file( QDir::homePath() + "/.ficonfig");
     if ( file.open( QIODevice::WriteOnly | QIODevice::Text) ) {
         QTextStream out( &file);
-        out << m_savePath;
+        out << g_savePath;
         file.close();
     }
 }
 
 void FlowIt::getLatestProject()
 {
-    QFile file( "config.fi");
+    QFile file( QDir::homePath() + "/.ficonfig");
     if ( file.open( QIODevice::ReadOnly | QIODevice::Text) ) {
         QString ln;
         QTextStream in( &file);
@@ -1227,6 +1303,6 @@ void FlowIt::getLatestProject()
         }
         file.close();
         if ( QFile::exists( ln) )
-            m_savePath = ln;
+            g_savePath = ln;
     }
 }

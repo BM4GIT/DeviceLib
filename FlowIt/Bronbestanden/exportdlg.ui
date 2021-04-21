@@ -103,6 +103,9 @@
      <height>21</height>
     </rect>
    </property>
+   <property name="readOnly">
+    <bool>true</bool>
+   </property>
   </widget>
   <widget class="QPushButton" name="pbFile">
    <property name="geometry">
@@ -117,7 +120,7 @@
     <string>...</string>
    </property>
   </widget>
-  <widget class="QRadioButton" name="rbImage">
+  <widget class="QRadioButton" name="rbPdf">
    <property name="geometry">
     <rect>
      <x>10</x>
@@ -206,7 +209,7 @@
   <zorder>rbRaspberry</zorder>
   <zorder>leFile</zorder>
   <zorder>pbFile</zorder>
-  <zorder>rbImage</zorder>
+  <zorder>rbPdf</zorder>
   <zorder>lblFile</zorder>
   <zorder>lblPrint</zorder>
   <zorder>pbCancel</zorder>
@@ -215,7 +218,7 @@
  <tabstops>
   <tabstop>rbArduino</tabstop>
   <tabstop>rbRaspberry</tabstop>
-  <tabstop>rbImage</tabstop>
+  <tabstop>rbPdf</tabstop>
   <tabstop>leFile</tabstop>
   <tabstop>pbFile</tabstop>
   <tabstop>rbPrint</tabstop>

@@ -9,10 +9,10 @@ FilloutDlg::FilloutDlg(QWidget *parent) :
     ui->setupUi(this);
     ui->lblChart->setText( T_FILCHARTTEXT);
     ui->lblCode->setText( T_FILCODETEXT);
-    ui->rbFunc->setText( T_FILFUNCCALL);
     ui->rbCode->setText( T_FILGENERAL);
-    ui->lblFunc->setText( T_FILFUNCTION);
-    ui->lblInst->setText( T_FILDECLARATION);
+    ui->rbDevice->setText( T_FILDEVCALL);
+    ui->lblDevice->setText( T_FILDEVICE);
+    ui->lblFuncDev->setText( T_FILFUNCTION);
 
     setWindowFlags( Qt::CustomizeWindowHint);
     ui->cbCode->setCurrentIndex( -1);
@@ -32,6 +32,7 @@ FilloutDlg::FilloutDlg(QWidget *parent) :
         switch ( type ) {
             case FOT_CHECK:
             case FOT_DO:
+            case FOT_UNTIL:
             case FOT_WHILE:     for ( int i = 0; i < g_variables.size(); i++ ) {
                                     QString var = g_variables.at( i)->name;
                                     if ( type == FOT_DO )
@@ -49,17 +50,6 @@ FilloutDlg::~FilloutDlg()
     delete ui;
 }
 
-void FilloutDlg::addInstance( QString instance)
-{
-    if ( instance.isEmpty() )
-        ui->rbCode->setChecked( true);
-    else {
-        ui->cbInst->addItem( instance);
-        ui->cbInst->setCurrentIndex( -1); // force to change index and
-        ui->cbInst->setCurrentIndex( 0);  // call on_cbInst_currentIndexChanged
-    }
-}
-
 void FilloutDlg::addRoutine( QString routine)
 {
     if ( ui->cbCode->findText( routine) < 0 )
@@ -73,10 +63,20 @@ void FilloutDlg::setChartText( QString text)
 
 void FilloutDlg::setCodeText( QString text)
 {
-    if ( ui->cbCode->findText( text) < 0 )
-        ui->cbCode->addItem( text);
-    ui->cbCode->setCurrentText( text);
-    ui->rbCode->setChecked( true);
+    QString snot;
+
+    text = text.trimmed();
+    if ( text.left( 1) == "!" ) {
+        text = text.right( text.length() - 1).trimmed();
+        snot = "!";
+    }
+
+    if ( ui->cbCode->findText( text) < 0 ) // (>= 0) can occur with routines
+        ui->cbCode->addItem( snot + text);
+    ui->cbCode->setCurrentIndex( -1);
+    ui->cbCode->setCurrentText( snot + text);
+
+    selectMode( FILMODE_GENERAL);
 }
 
 QString FilloutDlg::chartText()
@@ -86,60 +86,80 @@ QString FilloutDlg::chartText()
 
 QString FilloutDlg::codeText()
 {
-    if ( ui->rbFunc->isChecked() ) {
-        QString txt = ui->cbFunc->currentText();
+    QString decl = ui->cbDevice->currentData().toString();
+    if ( ui->rbDevice->isChecked() ) {
+        if ( decl.isEmpty() )
+            return ui->cbDevice->currentText() + "`" + ui->cbFuncDev->currentText();
+        QString txt = ui->cbFuncDev->currentText();
         if ( txt.left( 1) == "!" )
-            return "!" + ui->cbInst->currentText() + "." + txt.right( txt.length() - 1);
+            return "!" + decl + "." + txt.right( txt.length() - 1);
         else
-            return ui->cbInst->currentText() + "." + txt;
+            return decl + "." + txt;
     }
     return ui->cbCode->currentText();
 }
 
-void FilloutDlg::on_pbOK_clicked()
+void FilloutDlg::setMode( int mode, QString declaration, QString instance)
 {
-    accept();
+    m_mode = mode;
+    if ( declaration.isEmpty() ) {
+        for ( int i = STANDARDOBJECTS; i < g_objects.size(); i++ ) {
+            ui->cbDevice->addItem( g_objects.at( i)->name());
+            int ix = ui->cbDevice->count() - 1;
+            QVariant var = QVariant( g_objects.at( i)->getInstance());
+            ui->cbDevice->setItemData( ix, var);
+        }
+        selectMode( FILMODE_GENERAL);
+    }
+    else {
+        ui->cbDevice->addItem( declaration);
+        int ix = ui->cbDevice->count() - 1;
+        QVariant var = QVariant( instance);
+        ui->cbDevice->setItemData( ix, var);
+        selectMode( FILMODE_DEVICE);
+    }
+    ui->cbDevice->setCurrentIndex( -1); // force to change index and
+    ui->cbDevice->setCurrentIndex( 0);  // call on_cbModule_currentIndexChanged
 }
 
-void FilloutDlg::selectInstance( bool select)
+void FilloutDlg::selectMode( int mode)
 {
-    ui->lblInst->setEnabled( select);
-    ui->cbInst->setEnabled( select);
-    ui->lblFunc->setEnabled( select);
-    ui->cbFunc->setEnabled( select);
-    ui->lblCode->setEnabled( !select);
-    ui->cbCode->setEnabled( !select);
+    ui->rbDevice->setChecked( mode == FILMODE_DEVICE);
+    ui->lblDevice->setEnabled( mode == FILMODE_DEVICE);
+    ui->cbDevice->setEnabled( mode == FILMODE_DEVICE);
+    ui->lblFuncDev->setEnabled( mode == FILMODE_DEVICE);
+    ui->cbFuncDev->setEnabled( mode == FILMODE_DEVICE);
+
+    ui->rbCode->setChecked( mode == FILMODE_GENERAL);
+    ui->lblCode->setEnabled( mode == FILMODE_GENERAL);
+    ui->cbCode->setEnabled( mode == FILMODE_GENERAL);
 }
 
-void FilloutDlg::on_rbFunc_toggled(bool checked)
+void FilloutDlg::on_rbDevice_clicked()
 {
-    selectInstance( checked);
+    selectMode( FILMODE_DEVICE);
+    m_func = "";
+    m_funcix = ui->cbFuncDev->currentIndex();
 }
 
-void FilloutDlg::on_rbCode_toggled(bool checked)
+void FilloutDlg::on_cbDevice_currentIndexChanged(const QString &arg1)
 {
-    selectInstance( !checked);
-}
-
-void FilloutDlg::on_cbInst_currentIndexChanged(const QString &arg1)
-{
-    if ( ui->cbInst->currentIndex() >= 0 ) {
+    if ( ui->cbDevice->currentIndex() >= 0 ) {
         Template* templ = NULL;
         for ( int i = 0; i < g_objects.size(); i++ )
-            if ( g_objects.at( i)->getInstance() == arg1 ) {
+            if ( g_objects.at( i)->name() == arg1 ) {
                 templ = g_objects.at( i)->getTemplate();
                 break;
             }
-        ui->cbFunc->clear();
+        ui->cbFuncDev->clear();
         if ( templ ) {
             for ( int i = 0; i < templ->functionCount(); i++ )
-                ui->cbFunc->addItem( templ->getFunction( i));
-            ui->rbFunc->setChecked( true);
+                ui->cbFuncDev->addItem( templ->getFunction( i));
         }
     }
 }
 
-void FilloutDlg::on_cbFunc_currentTextChanged(const QString &arg1)
+void FilloutDlg::on_cbFuncDev_currentTextChanged(const QString &arg1)
 {
     if ( m_func.isEmpty() ) {
         m_func = arg1.trimmed();
@@ -150,18 +170,33 @@ void FilloutDlg::on_cbFunc_currentTextChanged(const QString &arg1)
     else {
         QString arg = arg1.trimmed();
         if ( arg.indexOf( ")") < 0 ) {
-            ui->cbFunc->setCurrentIndex( m_funcix);
+            ui->cbFuncDev->setCurrentIndex( m_funcix);
             return;
         }
         if ( arg.left( 1) == "!" )
             arg = arg.right( arg.length() - 1);
         if ( arg.left( m_func.length()) != m_func )
-            ui->cbFunc->setCurrentIndex( m_funcix);
+            ui->cbFuncDev->setCurrentIndex( m_funcix);
     }
 }
 
-void FilloutDlg::on_cbFunc_currentIndexChanged(const QString &arg1)
+void FilloutDlg::on_cbFuncDev_currentIndexChanged(const QString &arg1)
 {
+    m_funcix = ui->cbFuncDev->currentIndex();
     m_func = "";
-    m_funcix = ui->cbFunc->currentIndex();
+}
+
+void FilloutDlg::on_rbCode_clicked()
+{
+    selectMode( FILMODE_GENERAL);
+}
+
+void FilloutDlg::on_pbAccept_clicked()
+{
+    accept();
+}
+
+void FilloutDlg::on_pbReject_clicked()
+{
+    reject();
 }

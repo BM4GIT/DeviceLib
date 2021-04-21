@@ -224,6 +224,7 @@ bool FlowWhile::inConnectLeft( int x, int y)
 bool FlowWhile::hasInstance( QString name)
 {
     if ( m_code.indexOf( name + ".") >= 0 ) return true;
+    if ( m_code.indexOf( name + "`") >= 0 ) return true;
     if ( m_colL.hasInstance( name) ) return true;
     return FlowObject::hasInstance( name);
 }

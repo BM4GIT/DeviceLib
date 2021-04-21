@@ -9,7 +9,10 @@
 #include "flowroutine.h"
 #include "flowwait.h"
 #include "flowwhile.h"
+#include "flowuntil.h"
 #include "flowsensor.h"
+#include "flowstorage.h"
+#include "flowinterface.h"
 #include "flowpage.h"
 #include "template.h"
 
@@ -91,8 +94,17 @@ void Column::read( QTextStream& in)
         if ( tag == "<flowwhile>" )
             next = new FlowWhile( this, (FlowIt*) m_fi);
         else
+        if ( tag == "<flowuntil>" )
+            next = new FlowUntil( this, (FlowIt*) m_fi);
+        else
         if ( tag == "<flowsensor>" )
             next = new FlowSensor( this);
+        else
+        if ( tag == "<flowstorage>" )
+            next = new FlowStorage( this);
+        else
+        if ( tag == "<flowinterface>" )
+            next = new FlowInterface( this);
 
         next->read( in);
 

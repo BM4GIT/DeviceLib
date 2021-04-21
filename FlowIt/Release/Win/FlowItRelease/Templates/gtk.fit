@@ -1,0 +1,45 @@
+<template>
+<type>gui</type>
+<module>Screen</module>
+<include>ArduinoGtk.h</include>
+<function>setTitle( "titel")</function>
+<function>setSize( 800, 600)</function>
+<function>setPosition( 10, 10)</function>
+<function>setFullScreen( false)</function>
+<function>setPaperColor( 240, 240, 240, 255)</function>
+<function>create( tButton, "BT_OK", "OK")</function>
+<function>appendDefaultStyle( tButton, "font-size:10px;")</function>
+<function>setSize( widget, 100, 20)</function>
+<function>setPosition( widget, 10, 10)</function>
+<function>name( widget)</function>
+<function>destroy( widget)</function>
+<function>show( widget)</function>
+<function>hide( widget)</function>
+<function>setText( widget, tEdit, "tekst")</function>
+<function>text( widget, tEdit)</function>
+<function>setCheck( widget, true)</function>
+<function>isChecked( widget, tCheck)</function>
+<function>drag( widget)</function>
+<function>drop()</function>
+<function>setDragField( 0, 0, 800, 600)</function>
+<function>addStickyArea( 10, 10, 100, 20)</function>
+<function>removeStickyArea( 0)</function>
+<function>clearStickyAreas( )</function>
+<function>addRow( widget_list)</function>
+<function>setRowValues( 0, valuelist, tEdit)</function>
+<function>getRowValues( 0, valuelist, tEdit)</function>
+<function>mouseX( )</function>
+<function>mouseY( )</function>
+<function>mouse( xvalue, yvalue)</function>
+<function>mouseWidget( "widgetname")</function>
+<function>callOnMouseLClick( routine)</function>
+<function>callOnMouseRClick( routine)</function>
+<function>callOnMouseLRelease( routine)</function>
+<function>callOnMouseRRelease( routine)</function>
+<function>setLineColor( 0, 0, 0, 255)</function>
+<function>setFillColor( 255, 255, 255, 255)</function>
+<function>drawLine( 10, 10, 90, 90, 1)</function>
+<function>drawRectangle( 10, 10, 100, 20, 1, false)</function>
+<function>drawCircle( 10, 10, 100, 20, 1, false)</function>
+<function>callOnDraw( routine)</function>
+</template>

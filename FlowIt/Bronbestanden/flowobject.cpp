@@ -23,12 +23,15 @@ void FlowObject::write( QTextStream& out)
     case FOT_ACTUATOR:  out << g_tabs + "<flowactuator>\n"; break;
     case FOT_CHECK:     out << g_tabs + "<flowcheck>\n"; break;
     case FOT_WHILE:     out << g_tabs + "<flowwhile>\n"; break;
+    case FOT_UNTIL:     out << g_tabs + "<flowuntil>\n"; break;
     case FOT_REPEAT:    out << g_tabs + "<flowrepeat>\n"; break;
     case FOT_PAGE:      out << g_tabs + "<flowpage>\n"; break;
     case FOT_WAIT:      out << g_tabs + "<flowwait>\n"; break;
     case FOT_DO:        out << g_tabs + "<flowdo>\n"; break;
     case FOT_ROUTINE:   out << g_tabs + "<flowroutine>\n"; break;
     case FOT_SENSOR:    out << g_tabs + "<flowsensor>\n"; break;
+    case FOT_STORAGE:   out << g_tabs + "<flowstorage>\n"; break;
+    case FOT_INTERFACE: out << g_tabs + "<flowinterface>\n"; break;
     }
 
     g_tabs += '\t';
@@ -255,10 +258,31 @@ void FlowObject::makeCode( QString& txt)
     txt = m_code.trimmed();
     while ( txt.right( 1) == ";" )
         txt = txt.left( txt.length() - 1);
+
+    // without real code show fake-code
     if ( txt.isEmpty() ) {
         txt = m_chart.trimmed();
         if ( !txt.isEmpty() )
             txt = "^ " + txt + " ^";
+    }
+    else {
+        // remove all module names from the real code
+        for ( int i = txt.length() - 1; i >= 0; i-- ) {
+            if ( txt.at( i) == '`' ) {
+                for ( int j = i - 1; j >= -1; j-- ) {
+                    if ( j == - 1 ) {
+                        txt = txt.right( txt.length() - i - 1);
+                        i = -1;
+                        break;
+                    }
+                    if ( txt.at( j) == ' ' ) {
+                        txt = txt.left( j + 1) + txt.right( txt.length() - i - 1);
+                        i = j - 1;
+                        break;
+                    }
+                }
+            }
+        }
     }
 }
 

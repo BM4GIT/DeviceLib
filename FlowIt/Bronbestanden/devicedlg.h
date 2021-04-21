@@ -22,14 +22,12 @@ private slots:
     void on_pbCancel_clicked();
     void on_pbDo_clicked();
     void on_rbRoutine_clicked();
-    void on_rbVariable_clicked();
-    void on_rbActuator_clicked();
-    void on_rbSensor_clicked();
     void on_rbRoutineDel_clicked();
+    void on_rbVariable_clicked();
     void on_rbVariableDel_clicked();
+    void on_rbDevice_clicked();
     void on_rbDeviceDel_clicked();
-    void on_cbVariable_currentTextChanged(const QString &arg1);
-    void on_cbDevice_currentTextChanged(const QString &arg1);
+    void on_cbTypeDev_currentIndexChanged(int index);
     void on_cbClass_currentTextChanged(const QString &arg1);
     void on_cbUsing_currentTextChanged(const QString &arg1);
 

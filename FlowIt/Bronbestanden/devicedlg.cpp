@@ -22,11 +22,11 @@ DeviceDlg::DeviceDlg(QWidget *parent) :
     ui->lblVariable->setText( T_LBLVARIABLE);
     ui->rbVariable->setText( T_ADDVARIABLE);
     ui->rbVariableDel->setText( T_DELVARIABLE);
+    ui->lblTypeVar->setText( T_TYPE);
     ui->lblDevice->setText( T_LBLDEVICE);
-    ui->rbActuator->setText( T_ADDACTUATOR);
-    ui->rbSensor->setText( T_ADDSENSOR);
+    ui->rbDevice->setText(( T_ADDDEVICE));
     ui->rbDeviceDel->setText(( T_DELDEVICE));
-    ui->lblType->setText( T_VARTYPE);
+    ui->lblTypeDev->setText( T_TYPE);
     ui->lblClass->setText( T_DEVCLASS);
     ui->lblUsing->setText( T_DEVUSING);
     ui->lblInclude->setText( T_DEVINCLUDE);
@@ -37,6 +37,7 @@ DeviceDlg::DeviceDlg(QWidget *parent) :
     ui->cbRoutine->lineEdit()->setReadOnly( true);
     ui->cbVariable->lineEdit()->setReadOnly( true);
     ui->cbDevice->lineEdit()->setReadOnly( true);
+    ui->cbTypeDev->lineEdit()->setReadOnly( true);
 
     for ( int i = 2; i < g_tools.size(); i++ )
         if ( g_tools.at( i)->root()->type() == FOT_ROUTINE )
@@ -45,17 +46,22 @@ DeviceDlg::DeviceDlg(QWidget *parent) :
     for ( int i = 0; i < g_variables.size(); i++ )
         ui->cbVariable->addItem( g_variables.at( i)->name);
 
-    for ( int i = 6; i < g_objects.size(); i++ )
+    for ( int i = STANDARDOBJECTS; i < g_objects.size(); i++ )
         ui->cbDevice->addItem( g_objects.at( i)->name());
 
-    ui->cbType->addItem( "int");
-    ui->cbType->addItem( "long");
-    ui->cbType->addItem( "float");
-    ui->cbType->addItem( "double");
-    ui->cbType->addItem( "char");
-    ui->cbType->addItem( "String");
-    ui->cbType->addItem( "StringList");
-    ui->cbType->addItem( "bool");
+    ui->cbTypeVar->addItem( "int");
+    ui->cbTypeVar->addItem( "long");
+    ui->cbTypeVar->addItem( "float");
+    ui->cbTypeVar->addItem( "double");
+    ui->cbTypeVar->addItem( "char");
+    ui->cbTypeVar->addItem( "String");
+    ui->cbTypeVar->addItem( "StringList");
+    ui->cbTypeVar->addItem( "bool");
+
+    ui->cbTypeDev->addItem( T_ADDACTUATOR);
+    ui->cbTypeDev->addItem( T_ADDSENSOR);
+    ui->cbTypeDev->addItem( T_ADDSTORAGE);
+    ui->cbTypeDev->addItem( T_ADDGUI);
 
     setWindowFlags( Qt::CustomizeWindowHint);
     m_fi = (FlowIt*) parent;
@@ -133,7 +139,7 @@ void DeviceDlg::on_pbDo_clicked()
             mb.exec();
             return;
         }
-        m_fi->createVariable( ui->cbType->currentText(), name);
+        m_fi->createVariable( ui->cbTypeVar->currentText(), name);
         accept();
         return;
     }
@@ -146,11 +152,11 @@ void DeviceDlg::on_pbDo_clicked()
     }
 
     // device declaration
-    if ( ui->rbActuator->isChecked() || ui->rbSensor->isChecked() ) {
+    if ( ui->rbDevice->isChecked() ) {
         QString name = ui->leDevice->text();
         QString incl = ui->leInclude->text();
-        QString clss = ui->cbClass->currentText();
         QString vnam = ui->leDeclare->text();
+        Template* templ = g_findTemplate( incl);
 
         // an include file must be specified
         if ( incl.isEmpty() ) {
@@ -159,42 +165,32 @@ void DeviceDlg::on_pbDo_clicked()
             mb.exec();
             return;
         }
-        // a class must be specified
-        if ( clss.isEmpty() ) {
-            mb.setStandardButtons( QMessageBox::Ok);
-            mb.setText( I_SUPPLYCLASS);
-            mb.exec();
-            return;
-        }
-        // check the validity of the name
-        if ( !g_validName( vnam) ) {
-            mb.setStandardButtons( QMessageBox::Ok);
-            mb.setText( I_INVALIDDECL);
-            mb.exec();
-            return;
-        }
-        // the specified name must be unique
-        if ( m_fi->declarationExists( vnam) ) {
-            mb.setStandardButtons( QMessageBox::Ok);
-            mb.setText( I_DUPLICATENAME);
-            mb.exec();
-            return;
+        if ( templ->getModule().isEmpty() || !vnam.isEmpty() ) {
+            // check the validity of the name
+            if ( !g_validName( vnam) ) {
+                mb.setStandardButtons( QMessageBox::Ok);
+                mb.setText( I_INVALIDDECL);
+                mb.exec();
+                return;
+            }
+            // the specified name must be unique
+            if ( m_fi->declarationExists( vnam) ) {
+                mb.setStandardButtons( QMessageBox::Ok);
+                mb.setText( I_DUPLICATENAME);
+                mb.exec();
+                return;
+            }
         }
 
         // add the template to the used-library list
-        m_fi->addLibrary( g_findTemplate( incl));
+        m_fi->addLibrary( templ);
 
         // create the declaration object
         ObjectWid* ow;
-        if ( ui->rbActuator->isChecked() ) {
-            ow = new ObjectWid( m_fi, FOT_ACTUATOR);
-            m_fi->createObject( ow, name);
-        }
-        if ( ui->rbSensor->isChecked() ) {
-            ow = new ObjectWid( m_fi, FOT_SENSOR);
-            m_fi->createObject( ow, name);
-        }
-        ow->setDeclaration( clss, vnam, incl);
+        int fot = ui->cbTypeDev->currentIndex() + FOT_ACTUATOR;
+        ow = new ObjectWid( m_fi, fot);
+        m_fi->createObject( ow, name, templ->getModule().isEmpty());
+        ow->setDeclaration( vnam, incl);
         m_fi->listObjects();
 
         accept();
@@ -221,8 +217,8 @@ void DeviceDlg::enable( int type)
     ui->lblVariable->setEnabled( type == ADD_VARIABLE || type == DEL_VARIABLE);
     ui->cbVariable->setEnabled( type == ADD_VARIABLE || type == DEL_VARIABLE);
     ui->leVariable->setEnabled( type == ADD_VARIABLE || type == DEL_VARIABLE);
-    ui->lblType->setEnabled( type == ADD_VARIABLE);
-    ui->cbType->setEnabled( type == ADD_VARIABLE);
+    ui->lblTypeVar->setEnabled( type == ADD_VARIABLE);
+    ui->cbTypeVar->setEnabled( type == ADD_VARIABLE);
     if ( type == ADD_VARIABLE ) { ui->cbVariable->hide(); ui->leVariable->show(); ui->leVariable->setFocus(); }
     if ( type == DEL_VARIABLE ) { ui->cbVariable->show(); ui->leVariable->hide(); ui->cbVariable->setFocus(); }
 
@@ -230,6 +226,8 @@ void DeviceDlg::enable( int type)
     ui->lblDevice->setEnabled( type == ADD_DEVICE || type == DEL_DEVICE);
     ui->cbDevice->setEnabled( type == ADD_DEVICE || type == DEL_DEVICE);
     ui->leDevice->setEnabled( type == ADD_DEVICE || type == DEL_DEVICE);
+    ui->lblTypeDev->setEnabled( type == ADD_DEVICE);
+    ui->cbTypeDev->setEnabled( type == ADD_DEVICE);
     ui->lblInclude->setEnabled( type == ADD_DEVICE);
     ui->leInclude->setEnabled( type == ADD_DEVICE);
     ui->lblUsing->setEnabled( type == ADD_DEVICE);
@@ -247,46 +245,14 @@ void DeviceDlg::on_rbRoutine_clicked()
     enable( ADD_ROUTINE);
 }
 
-void DeviceDlg::on_rbVariable_clicked()
-{
-    enable( ADD_VARIABLE);
-}
-
-void DeviceDlg::on_rbActuator_clicked()
-{
-    enable( ADD_DEVICE);
-    ui->cbClass->clear();
-    ui->cbUsing->clear();
-    ui->leInclude->setText( "");
-    ui->leDeclare->setText( "");
-    for ( int i = 0; i < g_templates.size(); i++ ) {
-        if ( g_templates.at( i)->fot() != FOT_ACTUATOR )
-            continue;
-        QString cls = g_templates.at( i)->getClass();
-        if ( ui->cbClass->findText( cls) == -1 )
-            ui->cbClass->addItem( cls);
-    }
-}
-
-void DeviceDlg::on_rbSensor_clicked()
-{
-    enable( ADD_DEVICE);
-    ui->cbClass->clear();
-    ui->cbUsing->clear();
-    ui->leInclude->setText( "");
-    ui->leDeclare->setText( "");
-    for ( int i = 0; i < g_templates.size(); i++ ) {
-        if ( g_templates.at( i)->fot() != FOT_SENSOR )
-            continue;
-        QString cls = g_templates.at( i)->getClass();
-        if ( ui->cbClass->findText( cls) == -1 )
-            ui->cbClass->addItem( cls);
-    }
-}
-
 void DeviceDlg::on_rbRoutineDel_clicked()
 {
     enable( DEL_ROUTINE);
+}
+
+void DeviceDlg::on_rbVariable_clicked()
+{
+    enable( ADD_VARIABLE);
 }
 
 void DeviceDlg::on_rbVariableDel_clicked()
@@ -294,34 +260,52 @@ void DeviceDlg::on_rbVariableDel_clicked()
     enable( DEL_VARIABLE);
 }
 
+void DeviceDlg::on_rbDevice_clicked()
+{
+    enable( ADD_DEVICE);
+}
+
 void DeviceDlg::on_rbDeviceDel_clicked()
 {
     enable( DEL_DEVICE);
 }
 
-void DeviceDlg::on_cbVariable_currentTextChanged(const QString &arg1)
+void DeviceDlg::on_cbTypeDev_currentIndexChanged(int index)
 {
+    ui->cbClass->clear();
+    ui->cbUsing->clear();
+    ui->leInclude->setText( "");
+    ui->leDeclare->setText( "");
 
-}
-
-void DeviceDlg::on_cbDevice_currentTextChanged(const QString &arg1)
-{
-
+    int fot = index + FOT_ACTUATOR;
+    for ( int i = 0; i < g_templates.size(); i++ ) {
+        Template* templ = g_templates.at( i);
+        if ( templ->fot() != fot )
+            continue;
+        QString part = templ->getClass();
+        if ( part.isEmpty() )
+            part = templ->getModule();
+        if ( ui->cbClass->findText( part) == -1 )
+            ui->cbClass->addItem( part);
+    }
 }
 
 void DeviceDlg::on_cbClass_currentTextChanged(const QString &arg1)
 {
-    QString incl;
+    Template* templ = NULL;
+    QString incl, use;
     ui->cbUsing->clear();
     ui->leInclude->setText( "");
     ui->leDeclare->setText( "");
     for ( int i = 0; i < g_templates.size(); i++ ) {
-        Template* templ = g_templates.at( i);
-        if ( templ->getClass() == arg1 ) {
-            QString use = templ->getUsing();
+        templ = g_templates.at( i);
+        if ( templ->getClass() == arg1 || templ->getModule() == arg1 ) {
+            use = templ->getUsing();
             incl = templ->getInclude();
             if ( !use.isEmpty() && (ui->cbUsing->findText( use) == -1) )
                 ui->cbUsing->addItem( use);
+            ui->leDeclare->setEnabled( templ->getModule().isEmpty());
+            break;
         }
     }
     if ( !ui->cbUsing->count() && !incl.isEmpty() ) {
@@ -334,9 +318,12 @@ void DeviceDlg::on_cbClass_currentTextChanged(const QString &arg1)
 
 void DeviceDlg::on_cbUsing_currentTextChanged(const QString &arg1)
 {
-    for ( int i = 0; i < g_templates.size(); i++ ) {
+    for ( int i = 0; i < g_templates.size(); i++ )
+    {
         Template* templ = g_templates.at( i);
-        if ( templ->getUsing() == arg1 )
+        if ( templ->getUsing() == arg1 ) {
             ui->leInclude->setText( templ->getInclude());
+            break;
+        }
     }
 }

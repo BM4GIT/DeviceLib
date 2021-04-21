@@ -1,0 +1,15 @@
+<template>
+<type>storage</type>
+<include>sqlclient.h</include>
+<using></using>
+<class>SqlClient</class>
+<function>connect( "host", "db", "gebruiker", "wachtwoord")</function>
+<function>close( )</function>
+<function>isConnected( )</function>
+<function>query( "query")</function>
+<function>columnHeaders( )</function>
+<function>nextRow( )</function>
+<function>filloutQuery( "query", valuelist)</function>
+<function>filloutQuery( "query", value, ...)</function>
+<function>error( )</function>
+</template>

@@ -16,8 +16,8 @@ public:
     ~AskDlg();
 
     void setLabel( QString label);
-    void setValue( int value);
-    int value();
+    void setValue( QString value);
+    QString value();
 
 private slots:
     void on_pbVal_clicked();

@@ -18,15 +18,16 @@ public:
     explicit ObjectWid( QWidget *parent, int fot = -1);
     ~ObjectWid();
 
-    void init( QString name);
+    void init( QString name, bool isclass = true);
 
     void read( QTextStream& in);
     void write( QTextStream& out);
 
-    void setDeclaration( QString classname, QString instance, QString include = "");
+    void setDeclaration( QString instance, QString include = "");
     int height();
     QString name();
     int type();
+    bool isModule();
     QString getInstance();
     Template* getTemplate();
     bool inDrag( int x, int y);
@@ -41,6 +42,7 @@ private:
     Ui::ObjectWid*  ui;
     int             m_fot;
     QString         m_name;
+    bool            m_isclass;
     int             m_ypos;
     int             m_height;
     QString         m_inst;

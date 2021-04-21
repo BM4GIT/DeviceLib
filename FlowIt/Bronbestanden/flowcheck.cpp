@@ -124,7 +124,7 @@ void FlowCheck::drawChart( QPainter& p)
     p.setPen( Qt::black);
     p.setFont( QFont( "Arial", 8));
     p.drawText( QRect( m_xpos + wD/2 - 10, m_ypos + hD/2 - 20, 20, 10), Qt::AlignCenter, FO_NO);
-    p.drawText( QRect( m_xpos + 5, m_ypos + hD - 5, 20, 14), Qt::AlignCenter, FO_YES);
+    p.drawText( QRect( m_xpos + 5, m_ypos + hD - 5, 20, 10), Qt::AlignCenter, FO_YES);
 
     // draw condition
     p.setPen( Qt::blue);
@@ -280,6 +280,7 @@ bool FlowCheck::inConnectRight( int x, int y)
 bool FlowCheck::hasInstance( QString name)
 {
     if ( m_code.indexOf( name + ".") >= 0 ) return true;
+    if ( m_code.indexOf( name + "`") >= 0 ) return true;
     if ( m_colL.hasInstance( name) ) return true;
     if ( m_colR.hasInstance( name) ) return true;
     return FlowObject::hasInstance( name);

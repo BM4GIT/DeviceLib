@@ -21,6 +21,7 @@ public:
     explicit ExportDlg( QWidget *parent = 0);
     ~ExportDlg();
 
+    QString makeFilePath();
     QString printerName();
     QString filePath();
 
@@ -30,7 +31,7 @@ private slots:
 
     void on_rbArduino_clicked();
     void on_rbRaspberry_clicked();
-    void on_rbImage_clicked();
+    void on_rbPdf_clicked();
     void on_pbFile_clicked();
     void on_rbPrint_clicked();
     void on_pbOk_clicked();
@@ -41,8 +42,8 @@ private:
 
     Ui::ExportDlg *ui;
 
-    QString m_mydocs;
-    int     m_select;
+    QString m_path;
+    QString m_file;
 };
 
 #endif // EXPORTDLG_H

@@ -25,25 +25,6 @@
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <widget class="QSpinBox" name="sbNum">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>10</y>
-     <width>71</width>
-     <height>21</height>
-    </rect>
-   </property>
-   <property name="accelerated">
-    <bool>true</bool>
-   </property>
-   <property name="minimum">
-    <number>1</number>
-   </property>
-   <property name="maximum">
-    <number>9999999</number>
-   </property>
-  </widget>
   <widget class="QLabel" name="lblNum">
    <property name="geometry">
     <rect>
@@ -98,13 +79,27 @@
    <property name="frameShadow">
     <enum>QFrame::Raised</enum>
    </property>
+   <widget class="QLineEdit" name="leNum">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>10</y>
+      <width>71</width>
+      <height>21</height>
+     </rect>
+    </property>
+   </widget>
   </widget>
   <zorder>frame</zorder>
-  <zorder>sbNum</zorder>
   <zorder>lblNum</zorder>
   <zorder>pbVal</zorder>
   <zorder>pbCancel</zorder>
  </widget>
+ <tabstops>
+  <tabstop>leNum</tabstop>
+  <tabstop>pbVal</tabstop>
+  <tabstop>pbCancel</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
